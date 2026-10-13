@@ -95,7 +95,7 @@ final class RankedNhPanel extends PluginPanel
         match.add(Box.createVerticalStrut(8));match.add(requestStatus);match.add(error);
         primary=button("Accept match",true,()->handoff(false));secondary=button("Decline",false,()->handoff(true));
         match.add(primary);match.add(secondary);
-        setupHop=button("Hop to Arena",true,()->actions.setupHop(region.selected()));match.add(setupHop);
+        setupHop=button("Open world switcher",true,()->actions.setupHop(region.selected()));match.add(setupHop);
         add(match);gap(16);
 
         access.add(label("Pilot access key",12,TEXT));access.add(Box.createVerticalStrut(8));
@@ -194,7 +194,7 @@ final class RankedNhPanel extends PluginPanel
         boolean choosingRegion=connected && !preview && !s.queued && (s.match==null || !s.match.isOpen());
         regionChoice.setVisible(choosingRegion);queue.setVisible(choosingRegion);leave.setVisible(connected && !preview && s.queued);
         setupHop.setVisible(choosingRegion && kitRequired && onboardingStep==ArenaOnboarding.Step.HOP);
-        setupHop.setText(setupHopBusy?"Hopping…":"Hop to Arena");
+        setupHop.setText(setupHopBusy?"Finding world…":"Open world switcher");
         queue.setToolTipText(kitRequired?"Check your saved Max/Med kit at the supplies crate first.":null);
         queue.setEnabled(!busy && accountMatches && !kitRequired);leave.setEnabled(!busy && accountMatches);
         for(JButton b:new JButton[]{primary,secondary,forfeit,review,showReport}){b.setVisible(false);b.setEnabled(!busy && accountMatches);}
@@ -299,7 +299,7 @@ final class RankedNhPanel extends PluginPanel
         if(onboardingStep==ArenaOnboarding.Step.HOP){
             state.setText("Visit the supplies crate");
             copy(detail,!worldGuide.isEmpty() && java.util.Objects.equals(worldGuideRegion,region.selected())?worldGuide:
-                "Hop to a PvP Arena world in your selected region to check your Max/Med kit.");
+                "Open the world switcher and choose a PvP Arena world to check your Max/Med kit.");
             copy(hint,"A one-time check for this character before matchmaking.");
         }else if(onboardingStep==ArenaOnboarding.Step.CRATE){
             state.setText("Open the supplies crate");

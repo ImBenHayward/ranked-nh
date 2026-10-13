@@ -4,15 +4,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
-import net.runelite.client.util.WorldUtil;
 import net.runelite.http.api.worlds.World;
 import net.runelite.http.api.worlds.WorldResult;
 import net.runelite.http.api.worlds.WorldType;
 
-/** A hop is armed only by the user's click; RuneLite's normal world-switcher checks still apply. */
+/** Validates the suggested Arena world and opens the picker. The player selects the world. */
 final class ArenaWorldGuide
 {
     private final Client client;
@@ -23,11 +21,11 @@ final class ArenaWorldGuide
     private volatile boolean busy;
     private long generation,started;
     private String matchId;
-    private int round,world,attempts;
-    private net.runelite.api.World target;
-    private boolean submitted,setupHop;
-    private String playerId;
+    private int round,world;
+    private boolean readyToOpen;
     private volatile String instruction="",region="";
+    private boolean setupHop;
+    private String playerId;
 
     @Inject ArenaWorldGuide(Client client,ClientThread clientThread,WorldService worlds,ScheduledExecutorService executor,RankedNhPlugin plugin){
         this.client=client;this.clientThread=clientThread;this.worlds=worlds;this.executor=executor;this.plugin=plugin;
@@ -50,8 +48,8 @@ final class ArenaWorldGuide
     void request(){
         Models.Status s=plugin.status();
         if(busy)return;
-        if(!plugin.accountMatches() || client.getGameState()!=GameState.LOGGED_IN){plugin.handoffProblem("Log into your enrolled account before hopping.");return;}
-        if(!eligible(s)){plugin.handoffProblem(s!=null && "demo".equals(s.mode)?"Demo matches have no real Arena world to hop to.":"Both players must accept before hopping.");return;}
+        if(!plugin.accountMatches() || client.getGameState()!=GameState.LOGGED_IN){plugin.handoffProblem("Log into your enrolled account before opening the world switcher.");return;}
+        if(!eligible(s)){plugin.handoffProblem(s!=null && "demo".equals(s.mode)?"Demo matches have no real Arena destination.":"Both players must accept before opening the world switcher.");return;}
         if(client.getWorld()==s.match.world)return;
         setupHop=false;matchId=s.match.id;round=s.match.round;
         start(s.match.world,s.match.region);
@@ -66,7 +64,7 @@ final class ArenaWorldGuide
         start(0,region);
     }
     private void start(int assigned,String region){
-        busy=true;submitted=false;target=null;attempts=0;world=assigned;this.region=region;instruction="Finding an Arena world…";
+        busy=true;readyToOpen=false;world=assigned;instruction="";this.region=region;
         started=System.nanoTime();final long request=++generation;
         plugin.handoffProblem("");
         executor.execute(()->{
@@ -86,10 +84,8 @@ final class ArenaWorldGuide
                 if(error!=null){worlds.refresh();fail(error);return;}
                 if(!current()){cancel();return;}
                 world=resolved.getId();
-                instruction="Switching to World "+world+" ("+region+"). Complete any confirmation in game.";
-                target=client.createWorld();target.setId(resolved.getId());target.setAddress(resolved.getAddress());
-                target.setActivity(resolved.getActivity());target.setLocation(resolved.getLocation());
-                target.setPlayerCount(resolved.getPlayers());target.setTypes(WorldUtil.toWorldTypes(resolved.getTypes()));
+                instruction="Choose World "+world+" ("+region+") in the game’s world switcher.";
+                readyToOpen=true;
             });
         });
     }
@@ -100,16 +96,16 @@ final class ArenaWorldGuide
     }
     void tick(){
         if(!busy)return;
-        if(System.nanoTime()-started>15_000_000_000L){fail("World hop did not complete. Finish any game dialog, then try again.");return;}
+        if(System.nanoTime()-started>15_000_000_000L){fail("Could not load Arena worlds. Try again shortly.");return;}
         if(client.getGameState()==GameState.HOPPING || client.getGameState()==GameState.LOADING)return;
         if(!current() || client.getGameState()!=GameState.LOGGED_IN){cancel();return;}
         if(client.getWorld()==world){cancel();return;}
-        if(target==null || submitted)return;
-        if(client.getWidget(InterfaceID.Worldswitcher.BUTTONS)==null){
-            if(attempts++>=3){fail("Cannot open the world switcher. Finish what you're doing, then try again.");return;}
-            client.openWorldHopper();
-        }else{client.hopToWorld(target);submitted=true;}
+        if(!readyToOpen)return;
+        // Opening the native picker does not select a world or perform a hop.
+        client.openWorldHopper();
+        busy=false;readyToOpen=false;
+        plugin.handoffProblem("");
     }
     private void fail(String message){cancel();plugin.handoffProblem(message);}
-    void cancel(){generation++;busy=false;target=null;matchId=null;playerId=null;setupHop=false;instruction="";region="";}
+    void cancel(){generation++;busy=false;readyToOpen=false;matchId=null;playerId=null;setupHop=false;instruction="";region="";}
 }

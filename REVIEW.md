@@ -14,7 +14,7 @@ Polling is every 15 seconds for an idle logged-in participant, 30 seconds when l
 
 ## Game interaction and overlays
 
-- `ArenaWorldGuide` validates the destination against RuneLite's world list, region, Arena type and capacity. Only clicking **Hop to World …** or **Hop to Arena** arms a hop. It opens the native switcher with `Client.openWorldHopper` and submits the validated world once with the restricted `Client.hopToWorld` API. Normal game confirmations remain manual. Changing account, match or round cancels a pending hop; failed attempts time out. There is no automatic hopping when a match arrives. This call requires manual Plugin Hub review.
+- `ArenaWorldGuide` validates the suggested destination against RuneLite's world list, region, Arena type and capacity. After a user clicks **Open world switcher**, it opens the native picker with `Client.openWorldHopper`. The player selects the displayed world manually. The plugin never calls `Client.hopToWorld`.
 - `OpponentLocator` limits the tile, nameplate and minimap marker to the assigned opponent in the loaded scene, on the assigned Arena world, during preparation, active play or reporting. It does not locate players outside the loaded scene.
 - `RankMenuIcons` changes the rank image in a player's menu target on Arena worlds. It leaves the menu action and ordering intact. Other players' ranks are queried only after a local enrolled-member check.
 - Setup overlays identify differences from the default kit. They do not equip items, copy a loadout, choose a build, accept a duel or make combat decisions.
@@ -42,6 +42,6 @@ The production plugin has no dependencies beyond those supplied by RuneLite. JUn
 
 `./gradlew test jar` runs the public plugin tests. Coverage includes request serialization, repeated status refreshes during queue clicks, default-kit comparisons across worn and inventory slots, stale report handling and all rank resources.
 
-Earlier two-account Arena testing covered ordinary fights, setup differences, opponent indicators and reports. Hosted API tests covered pairing, paired round reports, result retries, settlement and history. Automated API tests are not a substitute for an Arena fight. The full disconnect, double-death and game-update matrix is still being tested in the beta. The latest queue-control and click-to-hop changes have regression coverage; a fresh two-player in-game check, including the restored hop, is pending.
+Earlier two-account Arena testing covered ordinary fights, setup differences, opponent indicators and reports. Hosted API tests covered pairing, paired round reports, result retries, settlement and history. Automated API tests are not a substitute for an Arena fight. The full disconnect, double-death and game-update matrix is still being tested in the beta. The latest queue-control changes have regression coverage; a fresh two-player in-game check is pending.
 
 The hosted Beta season awards ratings after accepted paired reports; earlier unrated pilot matches stay archived. Disputed or incomplete evidence goes to review. Closing the client can lose an unsent report. Matching client reports cannot prevent collusion or prove an untampered game result.

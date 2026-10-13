@@ -24,7 +24,7 @@ public class MatchupPreview
             try{
                 BufferedImage sidebar=new BufferedImage(747,724,BufferedImage.TYPE_INT_RGB);Graphics2D p=sidebar.createGraphics();
                 p.setColor(new Color(16,19,22));p.fillRect(0,0,747,724);p.setColor(RankedNhPanel.TEXT);p.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,14));
-                p.drawString("Sidebar preview · Accept → Hop → Check-in",12,24);
+                p.drawString("Sidebar preview · Accept → Choose world → Check-in",12,24);
                 for(int i=0;i<3;i++){
                     Models.Status s=MatchupTest.status();s.regions=List.of("EU","US");s.crossRegionAfterSeconds=30;
                     s.player.games=32;s.player.wins=21;s.player.rating=2202;s.player.rank=new Models.Rank();

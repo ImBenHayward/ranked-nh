@@ -64,11 +64,11 @@ public class QueueControlsTest {
         SwingUtilities.invokeAndWait(()->{
             List<String> events=new ArrayList<>();Models.Status status=status();RankedNhPanel panel=new RankedNhPanel(actions(events),"EU");
             panel.onboarding(ArenaOnboarding.Step.HOP,true,false);panel.render(status,"",false,true,"");panel.renderOnboarding(null);
-            assertFalse(button(panel,"Find a match").isEnabled());assertTrue(button(panel,"Hop to Arena").isVisible());assertTrue(button(panel,"Hop to Arena").isEnabled());
+            assertFalse(button(panel,"Find a match").isEnabled());assertTrue(button(panel,"Open world switcher").isVisible());assertTrue(button(panel,"Open world switcher").isEnabled());
             button(panel,"Find a match").doClick();assertTrue(events.isEmpty());
             status.queued=true;panel.render(status,"",false,true,"");button(panel,"Cancel search").doClick();assertEquals(List.of("leave"),events);
             status.queued=false;panel.onboarding(ArenaOnboarding.Step.READY,false,false);panel.render(status,"",false,true,"");
-            assertTrue(button(panel,"Find a match").isEnabled());assertFalse(button(panel,"Hop to Arena").isVisible());assertEquals(List.of("leave"),events);
+            assertTrue(button(panel,"Find a match").isEnabled());assertFalse(button(panel,"Open world switcher").isVisible());assertEquals(List.of("leave"),events);
             button(panel,"Find a match").doClick();assertEquals(List.of("leave","queue EU"),events);
         });
     }

@@ -25,8 +25,8 @@ final class MatchupView
         }else if("preparing".equals(m.state)){
             v.heading="Preparing fight "+m.round;
             if(world!=m.world || !arena){
-                v.message=hopping?"Switching worlds. Complete any confirmation in game.":"Travel to World "+m.world+" to meet your opponent.";
-                v.primary=hopping?"Hopping…":"Hop to World "+m.world;v.action="hop";
+                v.message=hopping?"Finding Arena world…":"Choose World "+m.world+" in the game’s world switcher.";
+                v.primary=hopping?"Finding world…":"Open world switcher";v.action="hop";
                 v.heading="Head to the Arena";
                 v.enabled=!busy && !hopping && !"demo".equals(s.mode);
                 v.footer="demo".equals(s.mode)?"Demo world only. No real Arena destination.":"Your opponent will be marked when nearby.";
@@ -48,8 +48,8 @@ final class MatchupView
         MatchupView v=new MatchupView();v.key="preview:"+stage;v.preview=true;
         v.heading=stage==0?"Match found":stage==1?"Head to the Arena":stage==2?"Preparing fight 1":"Challenge opponent";
         v.opponent="Demo Opponent";v.destination="EU · World 558";v.region="EU";v.world=558;
-        v.message=stage==0?"57 seconds to accept":stage==1?"Travel to World 558 to meet your opponent.":stage==2?"Opponent found. Checking you in automatically…":"Right-click your opponent → Challenge.";
-        v.primary=stage==0?"Accept match":stage==1?"Hop to World 558":stage==2?"Next preview step":"Replay preview";v.action="preview";v.enabled=true;
+        v.message=stage==0?"57 seconds to accept":stage==1?"Choose World 558 in the game’s world switcher.":stage==2?"Opponent found. Checking you in automatically…":"Right-click your opponent → Challenge.";
+        v.primary=stage==0?"Accept match":stage==1?"Open world switcher":stage==2?"Next preview step":"Replay preview";v.action="preview";v.enabled=true;
         v.secondary="Exit preview";v.secondaryAction="close-preview";v.footer="Sample only. No game or match actions.";
         return v;
     }
