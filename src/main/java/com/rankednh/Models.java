@@ -20,9 +20,12 @@ final class Models
         boolean isOpen() { return !("complete".equals(state) || "void".equals(state)); }
     }
     static final class Status {
+        Boolean rated;
+        Season season;
         String mode; String serverTime; Player player; boolean queued; String joinedAt; String cooldownUntil; String cooldownReason; Match match;
         List<String> regions=new ArrayList<>(); String queueRegion; int crossRegionAfterSeconds;
     }
+    static final class Season { String id,name,resetNotice; boolean beta; }
     static final class Hit {
         final String target; final int amount; final int tick;
         Hit(String target, int amount, int tick) { this.target=target; this.amount=amount; this.tick=tick; }

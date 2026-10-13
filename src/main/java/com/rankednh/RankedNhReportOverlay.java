@@ -25,8 +25,8 @@ final class RankedNhReportOverlay extends Overlay
     private boolean previewDismissed;
     private MatchReportView sample;
     private int previewSequence;
-    @Inject RankedNhReportOverlay(RankedNhPlugin plugin,RankedNhConfig config,Client client,ConfigManager manager,java.util.concurrent.ScheduledExecutorService executor) {
-        this(plugin,config,client,manager,new PlacementRevealAudio(executor),new RankSpinImages(executor));
+    @Inject RankedNhReportOverlay(RankedNhPlugin plugin,RankedNhConfig config,Client client,ConfigManager manager,java.util.concurrent.ScheduledExecutorService executor,net.runelite.client.audio.AudioPlayer audioPlayer) {
+        this(plugin,config,client,manager,new PlacementRevealAudio(executor,audioPlayer),new RankSpinImages(executor));
     }
     RankedNhReportOverlay(RankedNhPlugin plugin,RankedNhConfig config,Client client,ConfigManager manager,PlacementRevealAudio revealAudio,RankSpinImages spins) {
         super(plugin);this.plugin=plugin;this.config=config;this.client=client;

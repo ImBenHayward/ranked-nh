@@ -23,6 +23,10 @@ final class ReportSeenStore {
         while(values.size()>128)values.remove(values.iterator().next());
         write.accept(String.join(",",values));
     }
+    synchronized void forget(String key){
+        LinkedHashSet<String> values=entries();
+        if(values.remove(hash(key)))write.accept(String.join(",",values));
+    }
     private static String hash(String value){
         try{return Base64.getUrlEncoder().withoutPadding().encodeToString(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));}
         catch(java.security.NoSuchAlgorithmException impossible){throw new IllegalStateException(impossible);}

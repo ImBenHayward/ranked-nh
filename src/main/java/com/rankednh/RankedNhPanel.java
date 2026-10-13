@@ -29,6 +29,7 @@ final class RankedNhPanel extends PluginPanel
         default void previewRank(RankPreview scenario){}
         default void endTest(){}
         default void joinDiscord(){}
+        default void setupHop(String region){}
     }
     static final Color BG=new Color(27,30,34),SURFACE=new Color(35,39,43),TEXT=new Color(231,235,232),
         MUTED=new Color(159,167,164),ACCENT=new Color(155,198,173),LINE=new Color(54,60,60);
@@ -42,9 +43,14 @@ final class RankedNhPanel extends PluginPanel
     private final JPanel access=column(),regionChoice=column(),match=column(),summary=column();
     private final RegionPicker region;
     private final JLabel regionHint=label("",11,MUTED);
+    private final JLabel ratingNotice=label("",10,MUTED);
+    private final JLabel seasonNotice=label("",10,MUTED);
     private final JPasswordField key=new JPasswordField();
     private final JCheckBox consent=new JCheckBox("Share match observations");
-    private final JButton connect,queue,leave,primary,secondary,forfeit,review,showReport,saveKit,endTest;
+    private final JButton connect,queue,leave,primary,secondary,forfeit,review,showReport,saveKit,endTest,setupHop;
+    private ArenaOnboarding.Step onboardingStep;
+    private boolean kitRequired,setupHopBusy;
+    private String matchRatingNotice="";
     private final JPanel setupDetails=column();
     private final JLabel kitSaved=label("",11,MUTED);
     private final JLabel requestStatus=label("",11,MUTED);
@@ -55,6 +61,7 @@ final class RankedNhPanel extends PluginPanel
     private final JButton historyToggle;
     private final MatchHistoryPanel historyPanel;
     private String historyOwner;
+    private String historySeason;
     private MatchupView displayedHandoff;
     private boolean confirmForfeit;
 
@@ -71,7 +78,8 @@ final class RankedNhPanel extends PluginPanel
         rankRow.add(numbers,BorderLayout.CENTER);rankRow.setMaximumSize(new Dimension(Integer.MAX_VALUE,72));summary.add(rankRow);
         summary.add(Box.createVerticalStrut(12));progress.setForeground(ACCENT);progress.setBackground(LINE);progress.setBorderPainted(false);
         progress.setMinimumSize(new Dimension(1,3));progress.setPreferredSize(new Dimension(1,3));
-        progress.setAlignmentX(LEFT_ALIGNMENT);progress.setMaximumSize(new Dimension(Integer.MAX_VALUE,3));summary.add(progress);add(summary);gap(24);
+        progress.setAlignmentX(LEFT_ALIGNMENT);progress.setMaximumSize(new Dimension(Integer.MAX_VALUE,3));summary.add(progress);
+        summary.add(Box.createVerticalStrut(6));summary.add(ratingNotice);summary.add(seasonNotice);add(summary);gap(24);
 
         match.setBackground(SURFACE);match.setOpaque(true);
         match.setBorder(BorderFactory.createEmptyBorder(16,12,12,12));
@@ -86,6 +94,7 @@ final class RankedNhPanel extends PluginPanel
         match.add(Box.createVerticalStrut(8));match.add(requestStatus);match.add(error);
         primary=button("Accept match",true,()->handoff(false));secondary=button("Decline",false,()->handoff(true));
         match.add(primary);match.add(secondary);
+        setupHop=button("Hop to Arena",true,()->actions.setupHop(region.selected()));match.add(setupHop);
         add(match);gap(16);
 
         access.add(label("Pilot access key",12,TEXT));access.add(Box.createVerticalStrut(8));
@@ -166,29 +175,43 @@ final class RankedNhPanel extends PluginPanel
         connect.setEnabled(!busy && consent.isSelected());
         displayedHandoff=handoff;boolean preview=handoff!=null && handoff.preview,connected=s!=null;
         String owner=s==null || s.player==null?null:s.player.id;
-        if(!java.util.Objects.equals(owner,historyOwner)){historyOwner=owner;historyPanel.close();historyClosed();}
+        String season=s==null || s.season==null?null:s.season.id;
+        if(!java.util.Objects.equals(owner,historyOwner) || !java.util.Objects.equals(season,historySeason)){
+            historyOwner=owner;historySeason=season;historyPanel.close();historyClosed();
+        }
         historyToggle.setEnabled(connected);historyToggle.setToolTipText(connected?"Your 20 most recent matches":"Connect to view your match history");
         boolean canPreview=s==null || !s.queued && (s.match==null || !s.match.isOpen());
         previewToggle.setEnabled(canPreview);previewToggle.setToolTipText(canPreview?"Sample animations; your rating stays unchanged.":"Available between matches. Finish or leave your match first.");
         if(!canPreview)rankPreviews.setVisible(false);
-        mode.setText(preview?"Preview":!connected || "demo".equals(s.mode)?"Local":"Pilot");
+        mode.setText(preview?"Preview":!connected || "demo".equals(s.mode)?"Local":s.season!=null && s.season.beta?"Beta season":"Pilot");
+        copy(seasonNotice,connected && !preview && s.season!=null && s.season.resetNotice!=null?s.season.resetNotice.replace("Season 1","Season\u00a01"):"");
+        matchRatingNotice=connected && !preview && s.match!=null && s.match.isOpen() && !s.match.rated?
+            (s.match.reason!=null && s.match.reason.contains("Daily rated limit")?
+                "Daily limit for this opponent. This match is unrated.":"Unrated match. Placement progress stays unchanged."):"";
+        renderRatingAvailability(connected && !preview?s.rated:null);
         access.setVisible(!connected && !preview);
         boolean choosingRegion=connected && !preview && !s.queued && (s.match==null || !s.match.isOpen());
         regionChoice.setVisible(choosingRegion);queue.setVisible(choosingRegion);leave.setVisible(connected && !preview && s.queued);
-        queue.setEnabled(!busy && accountMatches);leave.setEnabled(!busy && accountMatches);
+        setupHop.setVisible(choosingRegion && kitRequired && onboardingStep==ArenaOnboarding.Step.HOP);
+        setupHop.setText(setupHopBusy?"Hopping…":"Hop to Arena");
+        queue.setToolTipText(kitRequired?"Check your saved Max/Med kit at the supplies crate first.":null);
+        queue.setEnabled(!busy && accountMatches && !kitRequired);leave.setEnabled(!busy && accountMatches);
         for(JButton b:new JButton[]{primary,secondary,forfeit,review,showReport}){b.setVisible(false);b.setEnabled(!busy && accountMatches);}
         for(JLabel l:new JLabel[]{opponent,destination,score,detail,hint,error,observation})l.setVisible(false);
         eyebrow.setText(preview?"Sample match":"Matchmaking");state.setText("Find a match");state.setForeground(TEXT);
         if(connected){
             Models.Player p=s.player;rank.setText(p.rank.name);badge.setIcon(badge(p.rank.badge));
             boolean placed=p.games>=5;rating.setText(placed?(int)Math.floor(p.rating)+" rating":Math.min(5,p.games)+" / 5 placements");
-            record.setText(p.wins+" W · "+(p.games-p.wins)+" L");progress.setMaximum(placed?60:5);
-            progress.setValue(placed?(p.rank.nextAt==null?60:Math.max(0,60-(p.rank.nextAt-(int)p.rating))):p.games);
+            record.setText(p.wins+" W · "+(p.games-p.wins)+" L");
+            int width=placed && p.rank.nextAt!=null && p.rank.divisionStart!=null?Math.max(1,p.rank.nextAt-p.rank.divisionStart):60;
+            progress.setMaximum(placed?width:5);
+            progress.setValue(placed?(p.rank.nextAt==null?width:Math.max(0,width-(p.rank.nextAt-(int)p.rating))):p.games);
         }
         if(preview){renderHandoff(handoff);copy(hint,"Sample match");finish();return;}
         copy(error,problem);
         if(!connected){copy(detail,"Connect to find a 126 NH opponent.");copy(hint,"Best of three · Max gear");finish();return;}
         region.update(s.regions,!busy);
+        setupHop.setEnabled(!busy && accountMatches && !setupHopBusy && region.selected()!=null);
         copy(regionHint,"DEMO".equals(region.selected())?"Local simulation only.":QueueRegionHint.preference(s.crossRegionAfterSeconds));
         Models.Match m=s.match;
         endTest.setVisible(m!=null && !m.rated && "review".equals(m.state));
@@ -204,7 +227,7 @@ final class RankedNhPanel extends PluginPanel
                 state.setText(s.player.id.equals(m.winner)?"Match won":"Match lost");opponent(m.opponent.rsn,m.opponent.rank);score(m.score);destination(m.region,m.world);
                 copy(detail,m.ratingChange==null?"Unrated match":(m.ratingChange>=0?"+":"")+m.ratingChange+" rating");
             }else if(m!=null && m.reason!=null)copy(hint,m.reason);
-            queue.setEnabled(!busy && accountMatches && s.cooldownUntil==null && region.selected()!=null);
+            queue.setEnabled(!busy && accountMatches && !kitRequired && s.cooldownUntil==null && region.selected()!=null);
             QueueCooldown cooldown=QueueCooldown.from(s,serverNow,java.time.ZoneId.systemDefault());
             if(cooldown!=null){state.setText("Queue cooldown");copy(detail,cooldown.remaining);copy(hint,cooldown.detail);}
         }else if(handoff!=null){
@@ -247,7 +270,10 @@ final class RankedNhPanel extends PluginPanel
         if(!view.changes.isEmpty()){
             state.setText(html(escape(view.changes.size()==1?view.changes.get(0).location+" differs":view.changes.size()+" kit differences")));
             copy(detail,view.changes.size()>1?"Start here. The next fix appears once this is corrected.":"");
-            copy(hint,"Counts include worn and inventory items. Hover red marks for details.");
+            ArenaKit.Change first=view.changes.get(0);
+            copy(hint,"Spellbook".equals(first.location)?"Use the spellbook selector above the kit.":
+                "Rune pouch".equals(first.location)?"Open the rune pouch to check enabled runes.":
+                "Counts include worn and inventory items. Hover red marks for details.");
             for(ArenaKit.Change change:view.changes.subList(0,1)){
                 setupDetails.add(Box.createVerticalStrut(8));
                 JLabel location=label(change.title(),11,TEXT);setupDetails.add(location);
@@ -259,6 +285,31 @@ final class RankedNhPanel extends PluginPanel
         }
         saveKit.setVisible(diagnostics && view.kit!=null && view.kit.complete());saveKit.setEnabled(!saving);
         copy(kitSaved,diagnostics?saved:"");finish();
+    }
+    void onboarding(ArenaOnboarding.Step step,boolean required,boolean hopping){
+        onboardingStep=step;kitRequired=required;setupHopBusy=hopping;
+    }
+    void renderOnboarding(ArenaSetup.View setup){
+        if(!kitRequired)return;
+        eyebrow.setText("First-time setup");
+        if(onboardingStep==ArenaOnboarding.Step.FIX || onboardingStep==ArenaOnboarding.Step.MAX_MED)return;
+        state.setForeground(TEXT);
+        if(onboardingStep==ArenaOnboarding.Step.HOP){
+            state.setText("Visit the supplies crate");
+            copy(detail,"First, hop to an Arena world to check your saved Max/Med kit.");
+            copy(hint,"A one-time check for this character before matchmaking.");
+        }else if(onboardingStep==ArenaOnboarding.Step.CRATE){
+            state.setText("Open the supplies crate");
+            copy(detail,"Open Supplies in the lobby, then choose Max/Med kit.");
+            copy(hint,"We'll check your items, spellbook and runes. Your item order is up to you.");
+        }else if(onboardingStep==ArenaOnboarding.Step.CHECKING){
+            state.setText("Checking your saved kit");
+            copy(detail,"Keep Max/Med kit open for a moment.");copy(hint,"Matchmaking unlocks automatically when the check passes.");
+        }
+        finish();
+    }
+    void renderRatingAvailability(Boolean rated){
+        copy(ratingNotice,Boolean.FALSE.equals(rated)?"Placements paused. Matches are unrated.":matchRatingNotice);
     }
     void renderRoundIssue(String reason){
         state.setText("Round not recorded");copy(detail,reason);detail.setForeground(new Color(231,174,136));

@@ -4,7 +4,7 @@ Find an NH opponent in Emir's Arena, play a best-of-three match and track your r
 
 The queue uses the Arena's default Max/Med loadout at 126 combat. Choose EU or US before searching. After 30 seconds, the queue can match you with someone from the other region.
 
-**Ranked NH is an invite-only beta. It is not yet available to install through Plugin Hub. Beta matches are currently unrated.**
+**Ranked NH is an invite-only beta. It is not yet available to install through Plugin Hub. The Beta season awards ratings, which reset before public Season 1.**
 
 ![The Ranked NH sidebar with region selection, a queued match and the Arena world button. The players and results are sample data.](docs/sidebar.png)
 
@@ -18,10 +18,10 @@ The server address is already set to `https://ranked-nh.vercel.app`. Normal Plug
 
 ## Playing a match
 
-1. Choose EU or US and click **Find a match**. **Cancel search** leaves the queue.
+1. Choose EU or US. On your first visit, use **Hop to Arena** and open **Supplies → Max/Med kit**. Fix any listed differences; **Find a match** unlocks once the check passes. The check is remembered for that character. **Cancel search** leaves the queue.
 2. Accept the matchup in the sidebar. You can enable a sound and RuneLite notification for new matches.
 3. Once both players accept, click the world button to hop to the assigned Arena world. The plugin marks your opponent when they are nearby.
-4. Challenge that player through the Arena, then select **Max/Med** and the default loadout. The plugin checks both saved kits and shows missing or different items. Inventory positions and which items you start wearing do not matter, provided the combined items and quantities match.
+4. Challenge that player through the Arena, then select **Max/Med** and the default loadout. The plugin checks both saved kits and shows missing or different items. Follow the outlined **Opponent's kit** tab, then **Confirm** when both kits pass. Inventory positions and which items you start wearing do not matter, provided the combined items and quantities match.
 5. Play until one player has won two fights. Wait for both round reports before starting the next fight.
 
 The plugin does not challenge players, change your loadout, click confirmation buttons or perform combat actions. **Copy Load-out** copies the opponent's current kit, so it is only useful when that kit is correct. Ranked NH does not provide a reset-to-default button.
@@ -30,14 +30,14 @@ The plugin does not challenge players, change your loadout, click confirmation b
 
 Match history lives in the sidebar. After a completed match, a report appears in the middle of the game view. Close it with its close button or Escape. You can reopen it with **Show match report**.
 
-When rated matches are enabled, five completed series determine your first rank. Divisions run from **III to II to I**, with I highest within each gem. Rank changes use the service's recorded match results. The current beta does not award rating or placement progress.
+Five completed rated series determine your first beta rank. Divisions run from **III to II to I**, with I highest within each gem. Rank changes use the service's recorded match results. Everyone starts Unranked with a hidden 1500 rating. Fixed thresholds put 1500 at Sapphire II after placements; joining players do not move the thresholds. Beta ratings reset before public Season 1.
 
 **Preview ranks** lets you try a promotion or first-rank reveal between matches. Previews use sample data and never change your results. Sound, volume and reduced motion are available in the plugin settings.
 
 ## If something goes wrong
 
 - **The queue is quiet:** both players need to be connected and searching. Cross-region matching opens after 30 seconds.
-- **The queue button is unavailable:** check that you are on the invited character. Any queue cooldown is shown with its reason and end time.
+- **The queue button is unavailable:** check that you are on the invited character and have completed the supplies-crate kit check. Any queue cooldown is shown with its reason and end time.
 - **Setup differs:** follow the highlighted difference. Both kits must match the default reference, even if the Arena says the two edited kits match each other.
 - **A match is under review:** return to the lobby and contact the organiser. During an unrated test, **End test match** lets you leave the series without changing ratings.
 - **The service disconnects:** reconnect with the same NH key. Keys expire after 30 days; ask the organiser for a replacement when needed.

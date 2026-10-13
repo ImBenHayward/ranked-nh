@@ -122,14 +122,14 @@ public class MatchReportTest
     @Test public void animationSurvivesPollingAndReplaysOnlyForANewResultOrReopen(){
         MatchReportAnimation animation=new MatchReportAnimation();MatchReportView v=MatchReportView.preview();
         animation.frame("one",v,100,false);
-        assertEquals(Integer.valueOf(1902),animation.frame("one",MatchReportView.preview(),2000,false).rating);
-        assertEquals(Integer.valueOf(1902),animation.frame("one",v,6000,false).rating);
-        assertEquals(Integer.valueOf(1864),animation.frame("two",v,6000,false).rating);
-        animation.reset();assertEquals(Integer.valueOf(1864),animation.frame("two",v,7000,false).rating);
+        assertEquals(Integer.valueOf(2202),animation.frame("one",MatchReportView.preview(),2000,false).rating);
+        assertEquals(Integer.valueOf(2202),animation.frame("one",v,6000,false).rating);
+        assertEquals(Integer.valueOf(2164),animation.frame("two",v,6000,false).rating);
+        animation.reset();assertEquals(Integer.valueOf(2164),animation.frame("two",v,7000,false).rating);
     }
     @Test public void reducedMotionImmediatelyShowsTheFinalValues(){
         MatchReportAnimation.Frame frame=MatchReportAnimation.sample(MatchReportView.preview(),0,true);
-        assertEquals(Integer.valueOf(1902),frame.rating);assertEquals(0.7,frame.progress,0.00001);assertEquals(1,frame.entrance,0);
+        assertEquals(Integer.valueOf(2202),frame.rating);assertEquals(0.7,frame.progress,0.00001);assertEquals(1,frame.entrance,0);
     }
     @Test public void hiddenOrUnconfirmedRatingsNeverCount(){
         Models.Status s=result();s.match.rated=false;

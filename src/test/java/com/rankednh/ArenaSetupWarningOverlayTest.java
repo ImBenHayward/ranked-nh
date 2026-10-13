@@ -50,6 +50,24 @@ public class ArenaSetupWarningOverlayTest {
         BufferedImage image=render();assertNotEquals(0,image.getRGB(79,119));assertEquals(0,image.getRGB(95,135));
         assertEquals(0,image.getRGB(349,119));assertTrue(view.changes.get(0).explanation().contains("Default: Virtus robe top"));
     }
+    @Test public void nextStepHighlightsTheFinalTabThenConfirmWithoutPaintingOverItems(){
+        put(757,0,new Rectangle(0,0,500,330));
+        widgets.put(757<<16|5,widget(new Rectangle(180,40,100,20),"Opponent's kit"));
+        widgets.put(757<<16|143,widget(new Rectangle(330,240,100,32),"<col=0dc10d>Confirm</col>"));
+        view=new ArenaSetup.View("Your kit is ready","","",false,null).guide(ArenaSetup.Target.OPPONENT_TAB);
+        BufferedImage image=render();assertTrue(painted(image)>0);assertEquals(0,image.getRGB(350,237));
+        view=new ArenaSetup.View("Default kits ready","","",false,null).guide(ArenaSetup.Target.KIT_CONFIRM);
+        image=render();assertEquals(ArenaSetupWarningOverlay.NEXT.getRGB(),image.getRGB(350,237));assertEquals(0,image.getRGB(200,37));
+        view=new ArenaSetup.View("Warning","","",true,null).guide(ArenaSetup.Target.KIT_CONFIRM);
+        assertEquals(0,painted(render()));
+        view=new ArenaSetup.View("Waiting","","",false,null);assertEquals(0,painted(render()));
+    }
+    @Test public void suppliesTabIsHighlightedBeforeTheItemPanelIsOpen(){
+        put(758,0,new Rectangle(0,0,500,330));
+        widgets.put(758<<16|5,widget(new Rectangle(180,40,100,20),"Max/Med kit"));
+        view=new ArenaSetup.View("Open Max/Med kit","","",false,null).guide(ArenaSetup.Target.MAX_MED_TAB);
+        assertTrue(painted(render())>0);
+    }
     @Test public void wrongBuildHighlightsMaxMedAndNeverConfirm(){
         put(757,0,new Rectangle(0,0,500,330));put(757,22,new Rectangle(330,240,100,32));
         Widget maxMed=widget(new Rectangle(80,90,76,18),"<col=ff9040>Max/Med</col>");

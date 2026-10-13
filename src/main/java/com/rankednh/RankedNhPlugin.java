@@ -47,6 +47,12 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     @Inject private RankedNhOpponentOverlay opponentOverlay;
     @Inject private RankedNhOpponentMinimapOverlay opponentMinimapOverlay;
     @Inject private ArenaSetupWarningOverlay setupWarningOverlay;
+    @Inject private ArenaSuppliesOverlay suppliesOverlay;
+    @Inject private ArenaOnboarding onboarding;
+    private volatile ArenaOnboarding.Step onboardingStep;
+    private volatile boolean kitRequired;
+    private volatile Boolean serviceRated;
+    private final AtomicBoolean checkingServiceMode=new AtomicBoolean();
     @Inject private RoundNoticeOverlay roundNoticeOverlay;
     @Inject private ArenaWorldHopper hopper;
     @Inject private Notifier notifier;
@@ -98,7 +104,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
             navigation=NavigationButton.builder().tooltip("Ranked NH").icon(net.runelite.client.util.ImageUtil.resizeImage(BadgeImages.image("zenyte_i"),16,16)).priority(6).panel(panel).build();
             toolbar.addNavigation(navigation);
         });
-        overlays.add(opponentOverlay);overlays.add(opponentMinimapOverlay);overlays.add(setupWarningOverlay);previewStage=0;matchAlert.reset();autoReady.reset();
+        overlays.add(opponentOverlay);overlays.add(opponentMinimapOverlay);overlays.add(setupWarningOverlay);overlays.add(suppliesOverlay);previewStage=0;matchAlert.reset();autoReady.reset();
         reportOverlay.reset();overlays.add(reportOverlay);overlays.add(roundNoticeOverlay);roundGuard.reset();
         // Stretched Mode's listeners at index zero must translate coordinates first.
         mouseManager.registerMouseListener(reportOverlay.input);
@@ -108,11 +114,11 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     @Override protected void shutDown() {
         generation.incrementAndGet();
         requests.discardQueued();
-        running=false;token=null;status=null;pendingReport=null;pendingMatch=null;
+        running=false;token=null;status=null;serviceRated=null;pendingReport=null;pendingMatch=null;
         rankMenuIcons.cache.clear();
         clientThread.invoke(recorder::clear);overlays.remove(reportOverlay);
         overlays.remove(roundNoticeOverlay);pendingSetupIssue=null;pendingSetupMatch=null;submittedSetup=null;battleArea=false;
-        overlays.remove(opponentOverlay);overlays.remove(opponentMinimapOverlay);overlays.remove(setupWarningOverlay);clientThread.invoke(hopper::cancel);
+        overlays.remove(opponentOverlay);overlays.remove(opponentMinimapOverlay);overlays.remove(setupWarningOverlay);overlays.remove(suppliesOverlay);clientThread.invoke(hopper::cancel);
         reportOverlay.reset();
         mouseManager.unregisterMouseListener(reportOverlay.input);
         mouseManager.unregisterMouseWheelListener(reportOverlay.input);
@@ -123,6 +129,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     @Provides RankedNhConfig provideConfig(ConfigManager manager){return manager.getConfig(RankedNhConfig.class);}
     Models.Status status(){return status;}
     ArenaSetup.View setupView(){return setupView;}
+    ArenaOnboarding.Step onboardingStep(){return accountMatches && kitRequired && ArenaOnboarding.idle(status) && !battleArea?onboardingStep:null;}
     boolean inArenaBattle(){return battleArea;}
     String roundNotice(){
         Models.Status s=status;if(!accountMatches || !battleArea || s==null || s.match==null)return "";
@@ -170,11 +177,17 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         currentWorld=client.getWorld();arenaWorld=client.getWorldType().contains(WorldType.PVP_ARENA);
         hitpoints=client.getBoostedSkillLevel(Skill.HITPOINTS);
         Models.Match match=status==null?null:status.match;
-        if(match==null || !match.id.equals(travelMatch) || currentWorld==match.world || !"preparing".equals(match.state))travelProblem="";
+        if(match==null && (travelMatch!=null || arenaWorld) || match!=null && (!match.id.equals(travelMatch) || currentWorld==match.world || !"preparing".equals(match.state)))travelProblem="";
         travelMatch=match==null?null:match.id;
         battleArea=ArenaCombat.inBattle(client);
         opponentNearby=OpponentLocator.find(client,status,accountMatches)!=null;fighting=battleArea;
         setupView=arenaSetup.read(client,status,accountMatches,fighting);
+        onboarding.observe(baseUrl,status,accountMatches,arenaWorld,battleArea,
+            ArenaSetup.visible(client,ArenaSetup.SUPPLIES,0) && !ArenaSetup.visible(client,ArenaSetup.DUEL,0),
+            ArenaSetup.visible(client,ArenaSetup.SUPPLIES,9),setupView,System.nanoTime()/1_000_000);
+        kitRequired=!onboarding.canQueue(baseUrl,status,accountMatches);
+        onboardingStep=onboarding.step();
+        suppliesOverlay.update();
         if(accountMatches){
             roundGuard.observe(status,setupView,battleArea,client.getLocalPlayer()!=null && client.getLocalPlayer().getCombatLevel()==126 && FightRecorder.maxStats(client));
             if(battleArea){
@@ -224,9 +237,14 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         MatchupView view=handoffView();
         Models.Status current=status;
         if(config.previewMatchup() && (current==null || (!current.queued && (current.match==null || !current.match.isOpen()))))view=MatchupView.preview(previewStage);
+        panel.onboarding(onboardingStep,kitRequired && accountMatches && !config.previewMatchup(),hopper.busy());
         panel.render(current,problem.isEmpty()?travelProblem:problem,requests.actionPending(),accountMatches,recording,view,serverNow());
-        if(!config.previewMatchup())panel.renderSetup(setupView,snapshotMessage,savingKit.get(),config.kitDiagnostics());
+        if(!config.previewMatchup()){
+            panel.renderSetup(setupView,snapshotMessage,savingKit.get(),config.kitDiagnostics());
+            if(accountMatches && ArenaOnboarding.idle(current))panel.renderOnboarding(setupView);
+        }
         if(roundGuard.blocked() && battleArea)panel.renderRoundIssue(roundGuard.reason());
+        panel.renderRatingAvailability(current==null?null:current.rated==null?serviceRated:current.rated);
         panel.renderRequest(requests.message());
     });}
     @Override public void connect(char[] key){
@@ -235,7 +253,16 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         String service;
         try{service=RankedNhApi.validateUrl(config.serviceUrl());}catch(IllegalArgumentException e){problem=e.getMessage();refresh();return;}
         final long session=generation.get();
-        work(true,"Connecting…",()->{Models.Status next=api.call(service,access,"/me",null);if(running && generation.get()==session){token=access;baseUrl=service;reportOverlay.connected(next);openPanel();}return next;});
+        work(true,"Connecting…",()->{Models.Status next=api.call(service,access,"/me",null);if(running && generation.get()==session){token=access;baseUrl=service;serviceRated=null;executor.execute(this::updateServiceMode);reportOverlay.connected(next);openPanel();}return next;});
+    }
+    @Schedule(period=60,unit=ChronoUnit.SECONDS,asynchronous=true)
+    public void updateServiceMode(){
+        if(!running || token==null || !checkingServiceMode.compareAndSet(false,true))return;
+        final long session=generation.get();final String service=baseUrl,access=token;
+        Boolean rated=null;
+        try{rated=api.rated(service,access);}catch(java.io.IOException | RuntimeException unavailable){/* Show unknown, never invent a rating policy. */}
+        finally{checkingServiceMode.set(false);}
+        if(running && generation.get()==session && service.equals(baseUrl) && access.equals(token)){serviceRated=rated;refresh();}
     }
     @Schedule(period=3,unit=ChronoUnit.SECONDS,asynchronous=true)
     public void poll(){
@@ -302,8 +329,21 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     }
     private void matchCommand(String suffix,Object body){Models.Status current=status;if(current!=null && current.match!=null)command("/match/"+current.match.id+suffix,body);}
     @Override public void queue(String region){
-        if(accountMatches && region!=null){configManager.setConfiguration("rankednh","preferredRegion",region);command("/queue/join",Map.of("rulesetId","nh-max-126-v1","consent",true,"region",region));}
+        clientThread.invoke(()->{
+            if(!accountMatches || region==null || !ArenaOnboarding.idle(status) || client.getGameState()!=GameState.LOGGED_IN ||
+                client.getLocalPlayer()==null || !FightRecorder.normalized(client.getLocalPlayer().getName()).equals(FightRecorder.normalized(status.player.rsn)))return;
+            updateHandoff();
+            if(!"demo".equals(status.mode) && client.getRevision()!=ArenaSetup.REVISION){
+                problem="The Arena interface has changed. Update Ranked NH before queueing.";refresh();return;
+            }
+            if(!onboarding.canQueue(baseUrl,status,accountMatches)){
+                problem="Visit the supplies crate and check your Max/Med kit before joining the queue.";refresh();return;
+            }
+            configManager.setConfiguration("rankednh","preferredRegion",region);
+            command("/queue/join",Map.of("rulesetId","nh-max-126-v1","consent",true,"region",region));
+        });
     }
+    @Override public void setupHop(String region){clientThread.invoke(()->hopper.requestSetup(region));}
     @Override public void hop(){clientThread.invoke(hopper::request);}
     @Override public void leave(){command("/queue/leave",Map.of());}
     @Override public void accept(boolean accepted){matchCommand("/accept",Map.of("accept",accepted));}
@@ -389,7 +429,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     }
     @Subscribe public void onHitsplatApplied(HitsplatApplied event){if(!roundGuard.blocked())recorder.hit(client,event.getActor(),event.getHitsplat().getAmount());}
     @Subscribe public void onActorDeath(ActorDeath event){recorder.death(client,event.getActor());}
-    @Subscribe public void onGameStateChanged(GameStateChanged event){recorder.gameState(event.getGameState());roundGuard.gameState(event.getGameState());if(event.getGameState()!=GameState.LOGGED_IN){accountMatches=false;opponentNearby=false;setupView=null;arenaSetup.reset();reportOverlay.hide();}if(event.getGameState()==GameState.LOGIN_SCREEN)hopper.cancel();refresh();}
+    @Subscribe public void onGameStateChanged(GameStateChanged event){recorder.gameState(event.getGameState());roundGuard.gameState(event.getGameState());if(event.getGameState()!=GameState.LOGGED_IN){accountMatches=false;opponentNearby=false;setupView=null;arenaSetup.reset();onboarding.interrupt();reportOverlay.hide();}if(event.getGameState()==GameState.LOGIN_SCREEN)hopper.cancel();refresh();}
     @Subscribe public void onConfigChanged(ConfigChanged event){
         if("rankednh".equals(event.getGroup()) && ("placementRevealSound".equals(event.getKey()) || "placementRevealVolume".equals(event.getKey()) ||
             "reduceReportMotion".equals(event.getKey()) || "showMatchReport".equals(event.getKey())))reportOverlay.stopSound();
@@ -403,7 +443,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
             requests.discardQueued();
             pendingSetupIssue=null;pendingSetupMatch=null;submittedSetup=null;battleArea=false;
             clientThread.invoke(roundGuard::reset);
-            generation.incrementAndGet();token=null;status=null;pendingReport=null;pendingMatch=null;reportBlocked=false;clientThread.invoke(()->{recorder.clear();hopper.cancel();matchAlert.reset();autoReady.reset();});
+            generation.incrementAndGet();token=null;status=null;serviceRated=null;pendingReport=null;pendingMatch=null;reportBlocked=false;clientThread.invoke(()->{recorder.clear();hopper.cancel();matchAlert.reset();autoReady.reset();});
             problem="Service changed. Connect again with the appropriate access key.";refresh();
             reportOverlay.reset();
         }

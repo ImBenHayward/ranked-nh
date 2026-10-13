@@ -1,6 +1,6 @@
 # Notes for Plugin Hub review
 
-Ranked NH matches two invited players for default Max/Med NH fights in Emir's Arena. The plugin observes those fights and submits reports to an external service. The service runs the queue, compares paired reports and records best-of-three results. The beta is currently unrated.
+Ranked NH matches two invited players for default Max/Med NH fights in Emir's Arena. The plugin observes those fights and submits reports to an external service. The service runs the queue, compares paired reports and records best-of-three results. The invitation-only Beta season awards ratings and placement progress. Those ratings reset before public Season 1.
 
 ## Network requests
 
@@ -24,11 +24,13 @@ The native setup/menu reads are limited to the supported game revision. Unsuppor
 
 ## Bundled resources and size
 
-The JAR is about 21 MiB. The manifest requests `jarSizeLimitMiB=25`, above the default 10 MiB limit, for maintainer review.
+The JAR is about 22.9 MiB. The manifest requests `jarSizeLimitMiB=25`, above the default 10 MiB limit, for maintainer review.
 
-Most of the size is 30 locally bundled rank-turn PNG sheets. Each contains 48 frames at 192 by 192 pixels, for reveals drawn at up to 184 pixels. Only the current rank is decoded, off the render thread, and its 6.75 MiB decoded sheet is released after the reveal. Reduced motion skips the animation. Missing or failed resources fall back to a still badge.
+Most of the size is 30 locally bundled rank turns, each with 48 separate PNG frames at 192 by 192 pixels. Each image decodes to 144 KiB; no large sprite sheets are bundled. Only the current rank is decoded, off the render thread. Its frames total 6.75 MiB and are released after the reveal. Reveals draw at up to 184 pixels. Reduced motion skips the animation. Missing or failed resources fall back to a still badge.
 
-The sheets use a shared palette where it meets the chosen quality floor, with RGBA retained for turns that lose too much colour detail when quantized. Reducing the original 256-pixel frames to 192 pixels brought the JAR down from about 31 MiB without dropping frames or changing the timing. The plugin loads no remote code, 3D runtime or video decoder. Rank images and reveal audio are classpath resources. [ASSET-LICENSE.md](ASSET-LICENSE.md) records permission to redistribute them with Ranked NH.
+Each turn uses a shared palette where it meets the chosen quality floor, with RGBA retained for turns that lose too much colour detail when quantized. The individual frames preserve the previous sheets' pixels, frame count and timing. The plugin loads no remote code, 3D runtime or video decoder. Rank images and reveal audio are classpath resources. [ASSET-LICENSE.md](ASSET-LICENSE.md) records permission to redistribute them with Ranked NH.
+
+Reveal audio uses RuneLite's injected `AudioPlayer` on its executor. The finite hum and chime are scheduled against the reveal clock; reduced motion plays just the chime. Closing or muting a report cancels pending cues. RuneLite exposes no stop handle, so a cue already playing finishes, at most 1.8 seconds later. Volume scaling and short fades are applied to the bundled PCM data before passing WAV streams to RuneLite. The production plugin does not use `javax.sound` directly.
 
 ## Local files and dependencies
 
@@ -42,4 +44,4 @@ The production plugin has no dependencies beyond those supplied by RuneLite. JUn
 
 Earlier two-account Arena testing covered ordinary fights, setup differences, opponent indicators and reports. Hosted API tests covered pairing, paired round reports, result retries, settlement and history. Automated API tests are not a substitute for an Arena fight. The full disconnect, double-death and game-update matrix is still being tested in the beta. The latest queue-control changes have regression coverage; a fresh two-player in-game check is pending.
 
-Ratings stay disabled during the beta checks. Disputed or incomplete evidence goes to review. Closing the client can lose an unsent report. Matching client reports cannot prevent collusion or prove an untampered game result.
+The hosted Beta season awards ratings after accepted paired reports; earlier unrated pilot matches stay archived. Disputed or incomplete evidence goes to review. Closing the client can lose an unsent report. Matching client reports cannot prevent collusion or prove an untampered game result.

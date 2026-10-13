@@ -22,6 +22,7 @@ import net.runelite.client.util.Text;
 /** Marks the setting to fix, independently of which tab contains Confirm. Never intercepts input. */
 final class ArenaSetupWarningOverlay extends Overlay {
     static final Color WARNING=new Color(237,137,129);
+    static final Color NEXT=new Color(155,211,173);
     private final Client client;
     private final RankedNhPlugin plugin;
     private final TooltipManager tooltips;
@@ -33,15 +34,29 @@ final class ArenaSetupWarningOverlay extends Overlay {
     }
     @Override public Dimension render(Graphics2D graphics){
         ArenaSetup.View view=plugin.setupView();
-        if(view==null || !view.warning || !plugin.accountMatches() || client.getGameState()!=GameState.LOGGED_IN)return null;
+        if(view==null || !plugin.accountMatches() || client.getGameState()!=GameState.LOGGED_IN)return null;
         boolean duel=visible(ArenaSetup.DUEL,0)!=null;
         int group=duel?ArenaSetup.DUEL:ArenaSetup.SUPPLIES;
-        if(!duel && visible(group,9)==null)return null;
+        if(!duel && visible(group,0)==null && visible(group,9)==null)return null;
         if(duel && "Choose Max/Med".equals(view.heading)){
             Widget choices=visible(group,10),target=findText(choices,"Max/Med",0);
             if(target!=null)drawBuildWarning(graphics,target.getBounds());
+            else guide(graphics,group,"Stats",WARNING);
             return null;
         }
+        switch(view.target){
+            case MAX_MED_TAB:
+                if(visible(group,duel?25:9)==null)guide(graphics,group,"Max/Med kit",view.warning?WARNING:NEXT);
+                break;
+            case OPPONENT_TAB:
+                if(duel && visible(group,120)==null)guide(graphics,group,"Opponent's kit",view.warning?WARNING:NEXT);
+                break;
+            case BUILD_CONFIRM: case KIT_CONFIRM:
+                if(duel && !view.warning)guide(graphics,group,"Confirm",NEXT);
+                break;
+            default:break;
+        }
+        if(!view.warning)return null;
         Map<Rectangle,ArenaKit.Change> marked=new LinkedHashMap<>();
         for(ArenaKit.Change change:view.changes){
             if(!duel && change.opponentSide)continue;
@@ -62,6 +77,19 @@ final class ArenaSetupWarningOverlay extends Overlay {
             }
         }
         return null;
+    }
+    private void guide(Graphics2D graphics,int group,String text,Color color){
+        // Some native tabs are siblings of the frame rather than children of widget zero.
+        for(int child=0;child<150;child++){
+            Widget target=findText(visible(group,child),text,0);
+            if(target==null)continue;
+            Rectangle bounds=target.getBounds();
+            if(bounds.width<=0 || bounds.height<=0)continue;
+            Graphics2D g=(Graphics2D)graphics.create();
+            try{g.setColor(color);g.setStroke(new BasicStroke(2));g.drawRoundRect(bounds.x-3,bounds.y-3,bounds.width+6,bounds.height+6,5,5);}
+            finally{g.dispose();}
+            return;
+        }
     }
     private static void mark(Widget widget,ArenaKit.Change change,Map<Rectangle,ArenaKit.Change> slots){
         if(widget==null || widget.isHidden())return;Rectangle bounds=widget.getBounds();

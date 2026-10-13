@@ -35,6 +35,11 @@ final class RankedNhApi
     Models.Status call(String base, String token, String path, Object payload) throws IOException {
         return gson.fromJson(request(base,token,path,payload),Models.Status.class);
     }
+    Boolean rated(String base,String token) throws IOException {
+        JsonObject health=gson.fromJson(request(base,token,"/health",null),JsonObject.class);
+        return health!=null && health.has("rated") && health.get("rated").isJsonPrimitive() && health.getAsJsonPrimitive("rated").isBoolean()?
+            health.get("rated").getAsBoolean():null;
+    }
     String request(String base,String token,String path,Object payload) throws IOException {
         Request.Builder request=new Request.Builder().url(validateUrl(base)+path).header("Authorization","Bearer "+token);
         if(payload!=null) request.post(RequestBody.create(MediaType.parse("application/json"),gson.toJson(payload)));

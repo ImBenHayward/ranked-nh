@@ -16,7 +16,22 @@ public class ArenaSetupTest
     }
     @Test public void suppliesDoNotPretendTheDuelBuildHasAlreadyBeenSelected(){
         ArenaSetup.View view=TestArenaKit.SETUP.describe(false,0,2,false,false,TestArenaKit.DEFAULT.kit(),null,null);
-        assertTrue(view.message.contains("after challenging"));assertFalse(view.comparisonKnown);
+        assertTrue(view.detail.contains("after challenging"));assertFalse(view.comparisonKnown);
+    }
+    @Test public void guidesTheFinalTabThenConfirmOnlyWithTwoVerifiedKits(){
+        ArenaKit kit=TestArenaKit.DEFAULT.kit();
+        ArenaSetup.View selected=TestArenaKit.SETUP.describe(true,1,0,false,false,kit,null,null);
+        assertEquals(ArenaSetup.Target.BUILD_CONFIRM,selected.target);
+        assertEquals(ArenaSetup.Target.NONE,TestArenaKit.SETUP.describe(true,1,0,true,false,kit,null,null).target);
+        ArenaSetup.View openOpponent=TestArenaKit.SETUP.describe(true,2,0,true,false,kit,null,null);
+        assertEquals(ArenaSetup.Target.OPPONENT_TAB,openOpponent.target);
+        ArenaSetup.View confirmed=TestArenaKit.SETUP.describe(true,2,0,true,false,kit,kit,null);
+        assertTrue(confirmed.comparisonKnown);assertEquals(ArenaSetup.Target.KIT_CONFIRM,confirmed.target);
+        assertTrue(confirmed.detail.contains("Click Confirm"));
+        assertEquals(ArenaSetup.Target.NONE,TestArenaKit.SETUP.describe(true,2,0,true,true,kit,kit,null).target);
+        ArenaSetup.View wrong=TestArenaKit.SETUP.describe(true,2,0,true,false,kit(0,1,55),kit,null);
+        assertTrue(wrong.warning);assertEquals(ArenaSetup.Target.MAX_MED_TAB,wrong.target);
+        assertNotEquals(ArenaSetup.Target.KIT_CONFIRM,TestArenaKit.SETUP.describe(true,2,0,true,false,kit,kit(0,1,55),null).target);
     }
     @Test public void challengeSelectsBuildBeforeCheckingKits(){
         ArenaSetup.View wrong=TestArenaKit.SETUP.describe(true,0,2,false,false,kit(0,1,55),null,null);

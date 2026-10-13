@@ -17,7 +17,7 @@ public class MatchReportPreview
         ImageIO.write(render(win,765,503,2000),"png",new File(folder,"match-report-fixed.png"));
         MatchReportView loss=MatchReportView.preview();
         loss.title="Defeat";loss.won=false;loss.score="1 – 2";loss.delta="-27";
-        loss.ratingBefore=1902;loss.ratingAfter=1875;loss.rating="1902 → 1875 rating";
+        loss.ratingBefore=2202;loss.ratingAfter=2175;loss.rating="2202 → 2175 rating";
         ImageIO.write(render(loss,1024,768,2000),"png",new File(folder,"match-report-defeat.png"));
         MatchReportView unrated=MatchReportView.preview();
         unrated.rank="Unranked";unrated.badge="unranked";unrated.delta="";unrated.rating="Unrated match";

@@ -21,7 +21,7 @@ final class MatchReportView
         if(!reportable(s))return null;
         MatchReportView v=new MatchReportView();Models.Match m=s.match;Models.Player p=s.player;
         Models.Rank rank=m.rankAfter!=null?m.rankAfter:p.rank;
-        v.heading="demo".equals(s.mode)?"Local demo · Match report":"Ranked NH · Match report";
+        v.heading="demo".equals(s.mode)?"Local demo · Match report":s.season!=null && s.season.beta?"Beta season · Match report":"Ranked NH · Match report";
         v.decided="complete".equals(m.state);v.won=v.decided && p.id.equals(m.winner);
         v.title=v.decided?(v.won?"Victory":"Defeat"):("review".equals(m.state)?"Result pending":"Match voided");
         v.opponent="vs "+m.opponent.rsn+" · Best of three";
@@ -74,25 +74,25 @@ final class MatchReportView
     static MatchReportView preview() {
         MatchReportView v=new MatchReportView();
         v.heading="Preview · Sample result";v.title="Victory";v.opponent="vs Demo Opponent · Best of three";v.score="2 – 1";
-        v.badge="dragonstone_iii";v.rank="Dragonstone III";v.rating="1864 → 1902 rating";v.delta="+38";
-        v.progressLabel="18 rating to Dragonstone II";v.progressDetail="1902 / 1920 rating";v.progress=0.7;
-        v.ratingBefore=1864;v.ratingAfter=1902;v.divisionStart=1860;v.nextAt=1920;v.nextRank="Dragonstone II";
+        v.badge="dragonstone_iii";v.rank="Dragonstone III";v.rating="2164 → 2202 rating";v.delta="+38";
+        v.progressLabel="18 rating to Dragonstone II";v.progressDetail="2202 / 2220 rating";v.progress=0.7;
+        v.ratingBefore=2164;v.ratingAfter=2202;v.divisionStart=2160;v.nextAt=2220;v.nextRank="Dragonstone II";
         v.note="Sample only. Your real rating is unchanged.";v.won=true;v.decided=true;v.preview=true;
         return v;
     }
     static MatchReportView preview(RankPreview scenario){
         MatchReportView v=preview();
         if(scenario==RankPreview.RANK_UP){
-            v.badgeBefore="diamond_ii";v.rankBefore="Diamond II";v.previousDivisionStart=1740;
-            v.badge="diamond_i";v.rank="Diamond I";v.ratingBefore=1788;v.ratingAfter=1826;
-            v.rating="1788 → 1826 rating";v.divisionStart=1800;v.nextAt=1860;v.nextRank="Dragonstone III";
-            v.progress=26/60.0;v.progressLabel="34 rating to Dragonstone III";v.progressDetail="1826 / 1860 rating";
+            v.badgeBefore="diamond_ii";v.rankBefore="Diamond II";v.previousDivisionStart=2040;
+            v.badge="diamond_i";v.rank="Diamond I";v.ratingBefore=2088;v.ratingAfter=2126;
+            v.rating="2088 → 2126 rating";v.divisionStart=2100;v.nextAt=2160;v.nextRank="Dragonstone III";
+            v.progress=26/60.0;v.progressLabel="34 rating to Dragonstone III";v.progressDetail="2126 / 2160 rating";
         }else if(scenario==RankPreview.RATING_LOSS){
-            v.title="Defeat";v.score="1 – 2";v.won=false;v.ratingBefore=1910;v.ratingAfter=1883;v.delta="-27";
-            v.rating="1910 → 1883 rating";v.progress=23/60.0;v.progressLabel="37 rating to Dragonstone II";v.progressDetail="1883 / 1920 rating";
+            v.title="Defeat";v.score="1 – 2";v.won=false;v.ratingBefore=2210;v.ratingAfter=2183;v.delta="-27";
+            v.rating="2210 → 2183 rating";v.progress=23/60.0;v.progressLabel="37 rating to Dragonstone II";v.progressDetail="2183 / 2220 rating";
         }else if(scenario==RankPreview.PLACEMENTS){
             v.title="Rank revealed";v.badgeBefore="unranked";v.rankBefore="Unranked";
-            v.badge="diamond_i";v.rank="Diamond I";v.ratingAfter=1826;
+            v.badge="diamond_i";v.rank="Diamond I";v.ratingAfter=2126;
             v.placementReveal=true;
             v.note="Sample placement reveal. Your real rating is unchanged.";
         }

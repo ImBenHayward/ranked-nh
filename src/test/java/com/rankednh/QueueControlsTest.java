@@ -60,10 +60,47 @@ public class QueueControlsTest {
             status.regions=List.of();panel.render(status,"",false,true,"");assertFalse(button(panel,"Find a match").isEnabled());
         });
     }
+    @Test public void onboardingBlocksJoiningButLeavesCancelAvailableAndUnlocksWithoutAutoQueueing()throws Exception{
+        SwingUtilities.invokeAndWait(()->{
+            List<String> events=new ArrayList<>();Models.Status status=status();RankedNhPanel panel=new RankedNhPanel(actions(events),"EU");
+            panel.onboarding(ArenaOnboarding.Step.HOP,true,false);panel.render(status,"",false,true,"");panel.renderOnboarding(null);
+            assertFalse(button(panel,"Find a match").isEnabled());assertTrue(button(panel,"Hop to Arena").isVisible());assertTrue(button(panel,"Hop to Arena").isEnabled());
+            button(panel,"Find a match").doClick();assertTrue(events.isEmpty());
+            status.queued=true;panel.render(status,"",false,true,"");button(panel,"Cancel search").doClick();assertEquals(List.of("leave"),events);
+            status.queued=false;panel.onboarding(ArenaOnboarding.Step.READY,false,false);panel.render(status,"",false,true,"");
+            assertTrue(button(panel,"Find a match").isEnabled());assertFalse(button(panel,"Hop to Arena").isVisible());assertEquals(List.of("leave"),events);
+            button(panel,"Find a match").doClick();assertEquals(List.of("leave","queue EU"),events);
+        });
+    }
     private static Models.Status status(){
         Models.Status s=new Models.Status();s.mode="pilot";s.regions=List.of("EU","US");s.crossRegionAfterSeconds=30;
         s.player=new Models.Player();s.player.id="test-player";s.player.rsn="Test Player";s.player.rank=new Models.Rank();
         s.player.rank.name="Unranked";s.player.rank.badge="unranked";return s;
+    }
+    @Test public void betaSeasonExplainsTheResetAndUsesServerDivisionBounds()throws Exception{
+        SwingUtilities.invokeAndWait(()->{
+            Models.Status status=status();status.rated=true;status.season=new Models.Season();status.season.id="beta-1";
+            status.season.name="Beta season";status.season.beta=true;status.season.resetNotice="Beta ratings reset before Season 1.";
+            status.player.games=5;status.player.rating=1520;status.player.rank.name="Sapphire II";status.player.rank.badge="sapphire_ii";
+            status.player.rank.divisionStart=1500;status.player.rank.nextAt=1580;
+            RankedNhPanel panel=new RankedNhPanel(actions(new ArrayList<>()));panel.render(status,"",false,true,"");
+            List<String> labels=new ArrayList<>();collectLabels(panel,labels);
+            assertTrue(labels.contains("Beta season"));assertTrue(labels.stream().anyMatch(s->s.contains("reset before Season 1")));
+            assertFalse(labels.stream().anyMatch(s->s.contains("Placements paused")));
+            javax.swing.JProgressBar bar=progress(panel);assertEquals(80,bar.getMaximum());assertEquals(20,bar.getValue());
+        });
+    }
+    private static void collectLabels(Container parent,List<String> labels){
+        for(Component child:parent.getComponents()){
+            if(child instanceof javax.swing.JLabel && child.isVisible())labels.add(((javax.swing.JLabel)child).getText().replace('\u00a0',' '));
+            if(child instanceof Container)collectLabels((Container)child,labels);
+        }
+    }
+    private static javax.swing.JProgressBar progress(Container parent){
+        for(Component child:parent.getComponents()){
+            if(child instanceof javax.swing.JProgressBar)return (javax.swing.JProgressBar)child;
+            if(child instanceof Container){javax.swing.JProgressBar result=progress((Container)child);if(result!=null)return result;}
+        }return null;
     }
     private static RankedNhPanel.Actions actions(List<String> events){
         return (RankedNhPanel.Actions)Proxy.newProxyInstance(RankedNhPanel.Actions.class.getClassLoader(),new Class<?>[]{RankedNhPanel.Actions.class},(proxy,method,args)->{

@@ -20,6 +20,7 @@ final class ArenaSetup
     static final int REVISION=241,DUEL=757,SUPPLIES=758;
     private static final int[] INVENTORY_BITS={14032,14033,14034,14036,14037,14038,14040,14041,14042,
         14044,14045,14046,14047,14048,14049,14050,14051,14052,14053,14054,14055,14056,14057,14058,14059,14060,14061,14062};
+    enum Target { NONE, MAX_MED_TAB, STATS_TAB, BUILD_CONFIRM, OPPONENT_TAB, KIT_CONFIRM }
     static final class View {
         final String heading,message,detail;
         final boolean warning;
@@ -27,6 +28,8 @@ final class ArenaSetup
         List<ArenaKit.Change> changes=java.util.List.of();
         boolean comparisonKnown;
         ArenaKit opponentKit;
+        Target target=Target.NONE;
+        View guide(Target target){this.target=target;return this;}
         View(String heading,String message,String detail,boolean warning,ArenaKit kit){
             this.heading=heading;this.message=message;this.detail=detail;this.warning=warning;this.kit=kit;
         }
@@ -56,7 +59,7 @@ final class ArenaSetup
             int build=client.getVarbitValue(14024),progress=client.getVarbitValue(14028);
             ArenaKit own=ownKit(client);
             own.runeSelection=runes(client,own.runePouch);
-            if(!duel && !visible(client,SUPPLIES,9))return new View("Open Max/Med kit","Select the Max/Med kit tab to check your items.","Choose the duel build after challenging.",false,own);
+            if(!duel && !visible(client,SUPPLIES,9))return new View("Open Max/Med kit","Select the Max/Med kit tab to check your items.","Choose the duel build after challenging.",false,own).guide(Target.MAX_MED_TAB);
             if(scoped && duel){
                 String title=widgetText(client,DUEL,2);
                 if(title.startsWith("Unranked Duel: ") && !FightRecorder.normalized(title.substring(15)).equals(FightRecorder.normalized(match.opponent.rsn)))
@@ -77,9 +80,9 @@ final class ArenaSetup
         }
     }
     View describe(boolean duel,int progress,int build,boolean acceptedBuild,boolean acceptedKit,ArenaKit own,ArenaKit opponent,ArenaKit confirmed){
-        if(duel && build!=0)return new View("Choose Max/Med","Select Max/Med in Stats.","Confirm the build together.",true,own);
-        if(duel && progress<=1)return new View("Confirm build",acceptedBuild?"Waiting for your opponent.":"Max/Med selected. Confirm in-game.","Next: check both kits against the default.",false,own);
-        if(own==null || !own.complete())return new View("Reading kit","Open your Max/Med kit.","Waiting for the configured supplies.",true,null);
+        if(duel && build!=0)return new View("Choose Max/Med","Select Max/Med in Stats.","Confirm the build together.",true,own).guide(Target.STATS_TAB);
+        if(duel && progress<=1)return new View("Confirm build",acceptedBuild?"Waiting for your opponent.":"Max/Med selected. Confirm in-game.","Next: check both kits against the default.",false,own).guide(acceptedBuild?Target.NONE:Target.BUILD_CONFIRM);
+        if(own==null || !own.complete())return new View("Reading kit","Open your Max/Med kit.","Waiting for the configured supplies.",true,null).guide(Target.MAX_MED_TAB);
         if(own.revision!=REVISION || opponent!=null && opponent.revision!=REVISION)
             return new View("Setup check unavailable","The game version differs from the default reference.","Update the plugin before fighting.",true,own);
         boolean yours=defaultKit.matches(own),theirs=defaultKit.matches(opponent);
@@ -90,14 +93,17 @@ final class ArenaSetup
             View view=new View(heading,"Match the default items and quantities before confirming.",recovery,true,own);
             List<ArenaKit.Change> changes=new ArrayList<>(own.defaultChanges(defaultKit.kit(),false));
             if(opponent!=null && opponent.complete())changes.addAll(opponent.defaultChanges(defaultKit.kit(),true));
+            if(!duel && changes.size()==1 && "Spellbook".equals(changes.get(0).location))
+                view=new View(heading,"Choose Ancient Magicks.","Set the spellbook to Ancient Magicks in the Arena editor.",true,own);
             view.changes=List.copyOf(changes);
+            view.target=!yours?Target.MAX_MED_TAB:Target.OPPONENT_TAB;
             return view;
         }
-        if(!duel)return new View("Your default kit is ready","Choose Max/Med after challenging your opponent.","Items and quantities match. Arrange and equip them however you like.",false,own);
+        if(!duel)return new View("Kit check complete","Find a match in the NH panel.","Choose Max/Med after challenging your opponent. Arrange and equip items however you like.",false,own);
         if(confirmed!=null && !confirmed.differences(own).isEmpty())
             return new View("Kit changed","Your kit changed after confirmation.","Check both kits and confirm again.",true,own);
-        if(opponent==null || !opponent.complete())return new View("Your kit is ready","Open Opponent's kit to check theirs.","Your default items and quantities match.",false,own);
-        View matched=new View("Default kits ready",acceptedKit?"Waiting for your opponent.":"Both players have the default Max/Med kit.","Any item order or gear switch is fine. Confirm in-game.",false,own);
+        if(opponent==null || !opponent.complete())return new View("Your kit is ready","Open Opponent's kit to check theirs.","Your default items and quantities match.",false,own).guide(Target.OPPONENT_TAB);
+        View matched=new View("Default kits ready",acceptedKit?"Waiting for your opponent.":"Both players have the default Max/Med kit.",acceptedKit?"The duel starts when you have both confirmed.":"Click Confirm on Opponent's kit to enter the duel.",false,own).guide(acceptedKit?Target.NONE:Target.KIT_CONFIRM);
         matched.comparisonKnown=true;matched.opponentKit=opponent;return matched;
     }
     static View withGameCheck(View view,String text){
@@ -107,7 +113,7 @@ final class ArenaSetup
         String plain=net.runelite.client.util.Text.removeTags(text).replace(' ',' ').toLowerCase(java.util.Locale.ROOT);
         if(plain.contains("does not match") || plain.contains("do not match")){
             return new View("Check opponent's kit","The opponent's full kit hasn't loaded yet.",
-                "Open Opponent's kit so NH can check the items and settings.",true,view.kit);
+                "Open Opponent's kit so NH can check the items and settings.",true,view.kit).guide(Target.OPPONENT_TAB);
         }
         if(plain.contains("will not permit") || plain.contains("too many") || plain.contains("cannot be fired"))
             return new View("Check kit","The Arena has flagged a loadout problem.","Review the warning below the kit.",true,view.kit);
