@@ -6,7 +6,7 @@ The queue uses the Arena's default Max/Med loadout at 126 combat. Choose EU or U
 
 **Ranked NH is an invite-only beta. It is not yet available to install through Plugin Hub. The Beta season awards ratings, which reset before public Season 1.**
 
-![The Ranked NH sidebar showing match acceptance, manual world selection and arrival checks. The players and results are sample data.](docs/sidebar.png)
+![The Ranked NH sidebar showing match acceptance, click-to-hop world travel and arrival checks. The players and results are sample data.](docs/sidebar.png)
 
 ## Joining the beta
 
@@ -18,9 +18,9 @@ The server address is already set to `https://ranked-nh.vercel.app`. Normal Plug
 
 ## Playing a match
 
-1. Choose EU or US. On your first visit, use **Open world switcher**, select the suggested Arena world and open **Supplies → Max/Med kit**. Fix any listed differences; **Find a match** unlocks once the check passes. The check is remembered for that character. **Cancel search** leaves the queue.
+1. Choose EU or US. On your first visit, click **Hop to Arena**, complete any game confirmation and open **Supplies → Max/Med kit**. Fix any listed differences; **Find a match** unlocks once the check passes. The check is remembered for that character. **Cancel search** leaves the queue.
 2. Accept the matchup in the sidebar. You can enable a sound and RuneLite notification for new matches.
-3. Once both players accept, click **Open world switcher**, then select the assigned Arena world yourself. The plugin marks your opponent when they are nearby.
+3. Once both players accept, click **Hop to World …** to travel to the assigned Arena world. Complete any normal game confirmation. The plugin marks your opponent when they are nearby.
 4. Challenge that player through the Arena, then select **Max/Med** and the default loadout. The plugin checks both saved kits and shows missing or different items. Follow the outlined **Opponent's kit** tab, then **Confirm** when both kits pass. Inventory positions and which items you start wearing do not matter, provided the combined items and quantities match.
 5. Play until one player has won two fights. Wait for both round reports before starting the next fight.
 

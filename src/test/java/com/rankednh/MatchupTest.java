@@ -35,7 +35,7 @@ public class MatchupTest
     }
     @Test public void handoffExplainsManualWorldSelectionThenChecksArrival(){
         Models.Status s=status();s.match.state="preparing";
-        MatchupView v=MatchupView.from(s,true,false,301,false,false,false,false,0);assertEquals("hop",v.action);assertTrue(v.enabled);assertEquals("Open world switcher",v.primary);assertTrue(v.message.contains("Choose World 558"));
+        MatchupView v=MatchupView.from(s,true,false,301,false,false,false,false,0);assertEquals("hop",v.action);assertTrue(v.enabled);assertEquals("Hop to World 558",v.primary);assertTrue(v.message.contains("Travel to World 558"));
         v=MatchupView.from(s,true,false,301,false,false,true,false,0);assertFalse(v.enabled);
         v=MatchupView.from(s,true,false,558,true,true,false,false,0);assertEquals("panel",v.action);assertEquals("Opponent found. Checking you in…",v.message);assertFalse(v.enabled);
         s.match.ready=true;assertFalse(MatchupView.from(s,true,false,558,true,true,false,false,0).enabled);
@@ -89,7 +89,7 @@ public class MatchupTest
             List<String> calls=new ArrayList<>();RankedNhPanel panel=panel(calls);
             panel.render(null,"",false,false,"",MatchupView.preview(0));
             JButton accept=button(panel,"Accept match");assertTrue(accept.isVisible());assertTrue(accept.isEnabled());accept.doClick();
-            panel.render(null,"",false,false,"",MatchupView.preview(1));button(panel,"Open world switcher").doClick();
+            panel.render(null,"",false,false,"",MatchupView.preview(1));button(panel,"Hop to World 558").doClick();
             button(panel,"Exit preview").doClick();
             assertEquals(List.of("preview:0/preview","preview:1/preview","preview:1/close-preview"),calls);
         });

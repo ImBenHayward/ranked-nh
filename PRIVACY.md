@@ -2,7 +2,7 @@
 
 Updated 13 October 2026.
 
-Ranked NH uses `https://ranked-nh.vercel.app`, operated by ImBenHayward, for its invited-player queue and match records. The API runs on Vercel and records are stored in Supabase Postgres. This service is separate from RuneLite and Jagex.
+Ranked NH uses `https://ranked-nh.vercel.app`, operated by ImBenHayward, for its invited-player queue and match records. The API runs on Render, Vercel forwards requests from the existing address, and records are stored in Supabase Postgres. This service is separate from RuneLite and Jagex.
 
 ## When requests start
 
