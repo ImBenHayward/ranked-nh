@@ -11,7 +11,7 @@ public class RankSpinImagesTest {
     @Test public void decodingIsDeferredAndStaleLoadsCannotReplaceTheCurrentRank(){
         List<Runnable> work=new ArrayList<>();AtomicInteger loads=new AtomicInteger();
         BufferedImage[] frames=frames();
-        frames[0].setRGB(0,0,0xff123456);frames[47].setRGB(0,0,0xffabcdef);
+        frames[0].setRGB(0,0,0xff123456);frames[31].setRGB(0,0,0xffabcdef);
         RankSpinImages spins=new RankSpinImages(work::add,badge->{loads.incrementAndGet();return frames;});
         spins.prepare("diamond_i");spins.prepare("diamond_i");assertEquals(1,work.size());
         assertNull(spins.frame("diamond_i",.5));assertEquals(0,loads.get());
@@ -28,16 +28,16 @@ public class RankSpinImagesTest {
         assertEquals(1,loads.get());spins.prepare("../../other");assertEquals(1,loads.get());
         assertFalse(RankSpinImages.supported("unranked"));
     }
-    @Test public void everyRankHas48SmallTransparentFramesAndNoOversizedSheet()throws Exception{
+    @Test public void everyRankHas32SmallTransparentFramesAndNoOversizedSheet()throws Exception{
         String[] gems={"opal","jade","red_topaz","sapphire","emerald","ruby","diamond","dragonstone","onyx","zenyte"};
         for(String gem:gems)for(String tier:new String[]{"iii","ii","i"}){
             String badge=gem+"_"+tier;BufferedImage[] frames=RankSpinImages.load(badge);
-            assertNotNull(badge,frames);assertEquals(48,frames.length);
+            assertNotNull(badge,frames);assertEquals(32,frames.length);
             assertNull(RankSpinImages.class.getResource("spins/"+badge+".png"));
             for(BufferedImage frame:frames){
-                assertNotNull(badge,frame);assertEquals(192,frame.getWidth());assertEquals(192,frame.getHeight());
+                assertNotNull(badge,frame);assertEquals(128,frame.getWidth());assertEquals(128,frame.getHeight());
                 assertTrue(frame.getColorModel().hasAlpha());assertEquals(0,frame.getRGB(0,0)>>>24);
-                assertTrue(frame.getWidth()*frame.getHeight()*4<=147456);
+                assertTrue(frame.getWidth()*frame.getHeight()*4<=65536);
                 frame.flush();
             }
         }
@@ -49,8 +49,8 @@ public class RankSpinImagesTest {
         spins.clear();spins.prepare("jade_i");assertEquals(2,loads.get());
     }
     private static BufferedImage[] frames(){
-        BufferedImage[] frames=new BufferedImage[48];
-        for(int i=0;i<frames.length;i++)frames[i]=new BufferedImage(192,192,BufferedImage.TYPE_INT_ARGB);
+        BufferedImage[] frames=new BufferedImage[32];
+        for(int i=0;i<frames.length;i++)frames[i]=new BufferedImage(128,128,BufferedImage.TYPE_INT_ARGB);
         return frames;
     }
 }

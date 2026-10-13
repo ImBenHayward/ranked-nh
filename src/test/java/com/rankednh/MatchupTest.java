@@ -33,9 +33,9 @@ public class MatchupTest
         assertEquals("3 seconds to accept",v.message);assertTrue(v.destination.contains("EU · World 558"));assertTrue(v.enabled);
         v=MatchupView.from(s,true,false,301,false,false,false,false,60_000);assertFalse(v.enabled);assertFalse(v.secondaryEnabled);
     }
-    @Test public void handoffMovesFromHopToReadyToCompactFightWithoutAutomatingChallenge(){
+    @Test public void handoffExplainsManualWorldSelectionThenChecksArrival(){
         Models.Status s=status();s.match.state="preparing";
-        MatchupView v=MatchupView.from(s,true,false,301,false,false,false,false,0);assertEquals("hop",v.action);assertTrue(v.enabled);
+        MatchupView v=MatchupView.from(s,true,false,301,false,false,false,false,0);assertEquals("hop",v.action);assertTrue(v.enabled);assertEquals("Open world switcher",v.primary);assertTrue(v.message.contains("Choose World 558"));
         v=MatchupView.from(s,true,false,301,false,false,true,false,0);assertFalse(v.enabled);
         v=MatchupView.from(s,true,false,558,true,true,false,false,0);assertEquals("panel",v.action);assertEquals("Opponent found. Checking you in…",v.message);assertFalse(v.enabled);
         s.match.ready=true;assertFalse(MatchupView.from(s,true,false,558,true,true,false,false,0).enabled);
@@ -44,7 +44,7 @@ public class MatchupTest
     @Test public void demoCannotHopAndClosedOrWrongAccountMatchesHaveNoPrompt(){
         Models.Status s=status();s.mode="demo";s.match.state="preparing";
         assertFalse(MatchupView.from(s,true,false,301,false,false,false,false,0).enabled);
-        assertFalse(ArenaWorldHopper.eligible(s));
+        assertFalse(ArenaWorldGuide.eligible(s));
         assertNull(MatchupView.from(s,false,false,301,false,false,false,false,0));
         s.match.state="complete";assertNull(MatchupView.from(s,true,false,301,false,false,false,false,0));
     }
@@ -53,15 +53,15 @@ public class MatchupTest
         return World.builder().id(id).location(location).players(players).types(set).address("oldschool258a.runescape.com").activity("PvP Arena").build();
     }
     @Test public void hopChecksLiveArenaTypeRegionPopulationAndExactWorld(){
-        assertNull(ArenaWorldHopper.validate(world(558,1,45,WorldType.PVP_ARENA),558,"EU"));
-        assertNull(ArenaWorldHopper.validate(world(578,0,45,WorldType.PVP_ARENA),578,"US"));
-        assertNotNull(ArenaWorldHopper.validate(null,558,"EU"));
-        assertNotNull(ArenaWorldHopper.validate(world(301,1,45,WorldType.MEMBERS),558,"EU"));
-        assertNotNull(ArenaWorldHopper.validate(world(558,1,45,WorldType.PVP),558,"EU"));
-        assertNotNull(ArenaWorldHopper.validate(world(558,0,45,WorldType.PVP_ARENA),558,"EU"));
-        assertNotNull(ArenaWorldHopper.validate(world(558,1,-1,WorldType.PVP_ARENA),558,"EU"));
-        assertNotNull(ArenaWorldHopper.validate(world(558,1,2000,WorldType.PVP_ARENA),558,"EU"));
-        assertNotNull(ArenaWorldHopper.validate(world(558,1,10,WorldType.PVP_ARENA,WorldType.HIGH_RISK),558,"EU"));
+        assertNull(ArenaWorldGuide.validate(world(558,1,45,WorldType.PVP_ARENA),558,"EU"));
+        assertNull(ArenaWorldGuide.validate(world(578,0,45,WorldType.PVP_ARENA),578,"US"));
+        assertNotNull(ArenaWorldGuide.validate(null,558,"EU"));
+        assertNotNull(ArenaWorldGuide.validate(world(301,1,45,WorldType.MEMBERS),558,"EU"));
+        assertNotNull(ArenaWorldGuide.validate(world(558,1,45,WorldType.PVP),558,"EU"));
+        assertNotNull(ArenaWorldGuide.validate(world(558,0,45,WorldType.PVP_ARENA),558,"EU"));
+        assertNotNull(ArenaWorldGuide.validate(world(558,1,-1,WorldType.PVP_ARENA),558,"EU"));
+        assertNotNull(ArenaWorldGuide.validate(world(558,1,2000,WorldType.PVP_ARENA),558,"EU"));
+        assertNotNull(ArenaWorldGuide.validate(world(558,1,10,WorldType.PVP_ARENA,WorldType.HIGH_RISK),558,"EU"));
     }
     @Test public void highlightsAreScopedToTheAssignedArenaAndDisappearWhenResolved(){
         Models.Status s=status();assertFalse(OpponentLocator.eligible(s,true,558,true));
@@ -89,7 +89,7 @@ public class MatchupTest
             List<String> calls=new ArrayList<>();RankedNhPanel panel=panel(calls);
             panel.render(null,"",false,false,"",MatchupView.preview(0));
             JButton accept=button(panel,"Accept match");assertTrue(accept.isVisible());assertTrue(accept.isEnabled());accept.doClick();
-            panel.render(null,"",false,false,"",MatchupView.preview(1));button(panel,"Hop to World 558").doClick();
+            panel.render(null,"",false,false,"",MatchupView.preview(1));button(panel,"Open world switcher").doClick();
             button(panel,"Exit preview").doClick();
             assertEquals(List.of("preview:0/preview","preview:1/preview","preview:1/close-preview"),calls);
         });

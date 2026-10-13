@@ -14,7 +14,7 @@ Polling is every 15 seconds for an idle logged-in participant, 30 seconds when l
 
 ## Game interaction and overlays
 
-- `ArenaWorldHopper` calls `Client.openWorldHopper` and `Client.hopToWorld` only after a user clicks the assigned-world button. It validates the destination against RuneLite's world list, region, Arena type and capacity. Ordinary game restrictions and confirmation dialogs still apply.
+- `ArenaWorldGuide` validates the suggested destination against RuneLite's world list, region, Arena type and capacity. After a user clicks **Open world switcher**, it opens the native picker with `Client.openWorldHopper`. The player selects the displayed world manually. The plugin never calls `Client.hopToWorld`.
 - `OpponentLocator` limits the tile, nameplate and minimap marker to the assigned opponent in the loaded scene, on the assigned Arena world, during preparation, active play or reporting. It does not locate players outside the loaded scene.
 - `RankMenuIcons` changes the rank image in a player's menu target on Arena worlds. It leaves the menu action and ordering intact. Other players' ranks are queried only after a local enrolled-member check.
 - Setup overlays identify differences from the default kit. They do not equip items, copy a loadout, choose a build, accept a duel or make combat decisions.
@@ -24,11 +24,11 @@ The native setup/menu reads are limited to the supported game revision. Unsuppor
 
 ## Bundled resources and size
 
-The JAR is about 22.9 MiB. The manifest requests `jarSizeLimitMiB=25`, above the default 10 MiB limit, for maintainer review.
+The JAR is about 8.9 MiB, within the default 10 MiB limit. No size allowance is requested.
 
-Most of the size is 30 locally bundled rank turns, each with 48 separate PNG frames at 192 by 192 pixels. Each image decodes to 144 KiB; no large sprite sheets are bundled. Only the current rank is decoded, off the render thread. Its frames total 6.75 MiB and are released after the reveal. Reveals draw at up to 184 pixels. Reduced motion skips the animation. Missing or failed resources fall back to a still badge.
+Most of the size is 30 locally bundled rank turns, each with 32 separate PNG frames at 128 by 128 pixels. Each image decodes to 64 KiB; no large sprite sheets are bundled. Only the current rank is decoded, off the render thread. Its frames total 2 MiB and are released after the reveal. Reveals draw at up to 184 pixels. Reduced motion skips the animation. Missing or failed resources fall back to a still badge.
 
-Each turn uses a shared palette where it meets the chosen quality floor, with RGBA retained for turns that lose too much colour detail when quantized. The individual frames preserve the previous sheets' pixels, frame count and timing. The plugin loads no remote code, 3D runtime or video decoder. Rank images and reveal audio are classpath resources. [ASSET-LICENSE.md](ASSET-LICENSE.md) records permission to redistribute them with Ranked NH.
+Each turn uses a shared palette where it meets the chosen quality floor, with RGBA retained for turns that lose too much colour detail when quantized. The turn keeps its original duration, easing and final orientation. Still badges are 256px, above the largest 184px reveal. All frames and badges are generated from the retained original artwork. The plugin loads no remote code, 3D runtime or video decoder. Rank images and reveal audio are classpath resources. [ASSET-LICENSE.md](ASSET-LICENSE.md) records permission to redistribute them with Ranked NH.
 
 Reveal audio uses RuneLite's injected `AudioPlayer` on its executor. The finite hum and chime are scheduled against the reveal clock; reduced motion plays just the chime. Closing or muting a report cancels pending cues. RuneLite exposes no stop handle, so a cue already playing finishes, at most 1.8 seconds later. Volume scaling and short fades are applied to the bundled PCM data before passing WAV streams to RuneLite. The production plugin does not use `javax.sound` directly.
 

@@ -51,6 +51,7 @@ final class RankedNhPanel extends PluginPanel
     private ArenaOnboarding.Step onboardingStep;
     private boolean kitRequired,setupHopBusy;
     private String matchRatingNotice="";
+    private String worldGuide="",worldGuideRegion="";
     private final JPanel setupDetails=column();
     private final JLabel kitSaved=label("",11,MUTED);
     private final JLabel requestStatus=label("",11,MUTED);
@@ -94,7 +95,7 @@ final class RankedNhPanel extends PluginPanel
         match.add(Box.createVerticalStrut(8));match.add(requestStatus);match.add(error);
         primary=button("Accept match",true,()->handoff(false));secondary=button("Decline",false,()->handoff(true));
         match.add(primary);match.add(secondary);
-        setupHop=button("Hop to Arena",true,()->actions.setupHop(region.selected()));match.add(setupHop);
+        setupHop=button("Open world switcher",true,()->actions.setupHop(region.selected()));match.add(setupHop);
         add(match);gap(16);
 
         access.add(label("Pilot access key",12,TEXT));access.add(Box.createVerticalStrut(8));
@@ -193,7 +194,7 @@ final class RankedNhPanel extends PluginPanel
         boolean choosingRegion=connected && !preview && !s.queued && (s.match==null || !s.match.isOpen());
         regionChoice.setVisible(choosingRegion);queue.setVisible(choosingRegion);leave.setVisible(connected && !preview && s.queued);
         setupHop.setVisible(choosingRegion && kitRequired && onboardingStep==ArenaOnboarding.Step.HOP);
-        setupHop.setText(setupHopBusy?"Hopping…":"Hop to Arena");
+        setupHop.setText(setupHopBusy?"Finding world…":"Open world switcher");
         queue.setToolTipText(kitRequired?"Check your saved Max/Med kit at the supplies crate first.":null);
         queue.setEnabled(!busy && accountMatches && !kitRequired);leave.setEnabled(!busy && accountMatches);
         for(JButton b:new JButton[]{primary,secondary,forfeit,review,showReport}){b.setVisible(false);b.setEnabled(!busy && accountMatches);}
@@ -289,6 +290,7 @@ final class RankedNhPanel extends PluginPanel
     void onboarding(ArenaOnboarding.Step step,boolean required,boolean hopping){
         onboardingStep=step;kitRequired=required;setupHopBusy=hopping;
     }
+    void onboardingGuide(String instruction,String region){worldGuide=instruction;worldGuideRegion=region;}
     void renderOnboarding(ArenaSetup.View setup){
         if(!kitRequired)return;
         eyebrow.setText("First-time setup");
@@ -296,7 +298,8 @@ final class RankedNhPanel extends PluginPanel
         state.setForeground(TEXT);
         if(onboardingStep==ArenaOnboarding.Step.HOP){
             state.setText("Visit the supplies crate");
-            copy(detail,"First, hop to an Arena world to check your saved Max/Med kit.");
+            copy(detail,!worldGuide.isEmpty() && java.util.Objects.equals(worldGuideRegion,region.selected())?worldGuide:
+                "Open the world switcher and choose a PvP Arena world to check your Max/Med kit.");
             copy(hint,"A one-time check for this character before matchmaking.");
         }else if(onboardingStep==ArenaOnboarding.Step.CRATE){
             state.setText("Open the supplies crate");

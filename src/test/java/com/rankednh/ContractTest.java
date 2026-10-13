@@ -17,10 +17,10 @@ public class ContractTest
     @Test public void allThirtyBadgesAndPlacementAssetLoad(){
         for(String gem:new String[]{"opal","jade","red_topaz","sapphire","emerald","ruby","diamond","dragonstone","onyx","zenyte"}){
             for(String division:new String[]{"iii","ii","i"}){
-                assertEquals(500,BadgeImages.image(gem+"_"+division).getWidth());
-                assertEquals(500,BadgeImages.image(gem+"_"+division).getHeight());
+                assertEquals(256,BadgeImages.image(gem+"_"+division).getWidth());
+                assertEquals(256,BadgeImages.image(gem+"_"+division).getHeight());
             }
         }
-        assertEquals(500,BadgeImages.image("unranked").getWidth());
+        assertEquals(256,BadgeImages.image("unranked").getWidth());
     }
 }

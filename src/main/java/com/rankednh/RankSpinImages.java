@@ -8,7 +8,7 @@ import javax.imageio.ImageIO;
 
 /** One rank's bounded frames at a time. Decode off-thread; missing frames use the still badge. */
 final class RankSpinImages {
-    static final int SIZE=192,FRAMES=48;
+    static final int SIZE=128,FRAMES=32;
     interface Loader { BufferedImage[] load(String badge) throws IOException; }
     private final Executor executor;
     private final Loader loader;

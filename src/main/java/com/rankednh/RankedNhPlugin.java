@@ -54,7 +54,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     private volatile Boolean serviceRated;
     private final AtomicBoolean checkingServiceMode=new AtomicBoolean();
     @Inject private RoundNoticeOverlay roundNoticeOverlay;
-    @Inject private ArenaWorldHopper hopper;
+    @Inject private ArenaWorldGuide hopper;
     @Inject private Notifier notifier;
     @Inject private MouseManager mouseManager;
     @Inject private KeyManager keyManager;
@@ -238,6 +238,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         Models.Status current=status;
         if(config.previewMatchup() && (current==null || (!current.queued && (current.match==null || !current.match.isOpen()))))view=MatchupView.preview(previewStage);
         panel.onboarding(onboardingStep,kitRequired && accountMatches && !config.previewMatchup(),hopper.busy());
+        panel.onboardingGuide(hopper.instruction(),hopper.region());
         panel.render(current,problem.isEmpty()?travelProblem:problem,requests.actionPending(),accountMatches,recording,view,serverNow());
         if(!config.previewMatchup()){
             panel.renderSetup(setupView,snapshotMessage,savingKit.get(),config.kitDiagnostics());
