@@ -1,12 +1,12 @@
-# Asset licences
+# Asset notices
 
-The application code and original reveal audio use the [BSD 2-Clause licence](LICENSE).
+The [BSD 2-Clause licence](LICENSE) covers this entire repository, including the code, rank artwork, animations, original reveal audio and documentation images. These notices record asset origins and attribution; they do not add restrictions to that licence.
 
 ## Rank artwork
 
-The rank badges and animated turns were created by ImBenHayward. On 13 October 2026, the owner confirmed the right to distribute the artwork with Ranked NH.
+The rank badges and animated turns were created by ImBenHayward and are licensed under BSD 2-Clause.
 
-The images under `src/main/resources/com/rankednh/badges/` and `src/main/resources/com/rankednh/spins/` may be included and redistributed as part of Ranked NH, including through RuneLite's Plugin Hub. This permission is separate from the code licence and does not grant a standalone artwork licence. For modified artwork or reuse in another project, contact the owner.
+The images under `src/main/resources/com/rankednh/badges/` and `src/main/resources/com/rankednh/spins/` may be reused and modified under that licence, including in other projects. No separate permission is required.
 
 The original PNGs and editable Blender models remain in the private development repository. Blender and imagequant are asset preparation tools and are not shipped with the plugin.
 

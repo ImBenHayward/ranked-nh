@@ -68,4 +68,4 @@ To launch a development client:
 
 For a Jagex account, follow [RuneLite's development-login instructions](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts). That handoff is for development, not normal Plugin Hub installation.
 
-The plugin uses `build=standard` for Plugin Hub. [Review notes](REVIEW.md) describe the network calls, restricted APIs and bundled animation size. Code and original reveal audio use the [BSD 2-Clause licence](LICENSE); see [asset licences](ASSET-LICENSE.md) for the artwork and Discord icon.
+The plugin uses `build=standard` for Plugin Hub. [Review notes](REVIEW.md) describe the network calls, restricted APIs and bundled animation size. The entire repository, including the rank artwork and original reveal audio, uses the [BSD 2-Clause licence](LICENSE). See [asset notices](ASSET-LICENSE.md) for origins and attribution.
