@@ -1,0 +1,18 @@
+plugins { id 'java' }
+repositories { maven { url='https://repo.runelite.net'; content { includeGroupByRegex('net\\.runelite.*') } }; mavenCentral() }
+dependencies {
+    compileOnly 'net.runelite:client:latest.release'
+    testImplementation 'net.runelite:client:latest.release'
+    testImplementation 'net.runelite:jshell:latest.release'
+    testImplementation 'junit:junit:4.13.2'
+}
+tasks.withType(JavaCompile).configureEach { options.release.set(11); options.encoding='UTF-8' }
+tasks.register('run', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.rankednh.RankedNhPluginTest'
+    jvmArgs '-ea', '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED'
+    if (System.getProperty('os.name').toLowerCase().contains('mac')) {
+        jvmArgs '--add-exports=java.desktop/com.apple.eawt=ALL-UNNAMED'
+    }
+    args '--developer-mode', '--debug'
+}

@@ -1,0 +1,205 @@
+{
+  "revision": 241,
+  "build": 0,
+  "spellbook": 1,
+  "runePouch": 0,
+  "equipment": [
+    {
+      "itemId": 26382,
+      "quantity": 1,
+      "name": "Torva full helm"
+    },
+    {
+      "itemId": 21793,
+      "quantity": 1,
+      "name": "Imbued Guthix cape"
+    },
+    {
+      "itemId": 6585,
+      "quantity": 1,
+      "name": "Amulet of fury"
+    },
+    {
+      "itemId": 12904,
+      "quantity": 1,
+      "name": "Toxic Staff of the Dead"
+    },
+    {
+      "itemId": -1,
+      "quantity": 0,
+      "name": "Empty"
+    },
+    {
+      "itemId": 27253,
+      "quantity": 1,
+      "name": "Elidinis' ward (or)"
+    },
+    {
+      "itemId": 26245,
+      "quantity": 1,
+      "name": "Virtus robe bottom"
+    },
+    {
+      "itemId": 7462,
+      "quantity": 1,
+      "name": "Barrows gloves"
+    },
+    {
+      "itemId": 31097,
+      "quantity": 1,
+      "name": "Avernic treads (max)"
+    },
+    {
+      "itemId": 28307,
+      "quantity": 1,
+      "name": "Ultor ring"
+    },
+    {
+      "itemId": 21932,
+      "quantity": 5000,
+      "name": "Opal dragon bolts (e)"
+    }
+  ],
+  "inventory": [
+    {
+      "itemId": 12695,
+      "quantity": 1,
+      "name": "Super combat potion(4)"
+    },
+    {
+      "itemId": 2444,
+      "quantity": 1,
+      "name": "Ranging potion(4)"
+    },
+    {
+      "itemId": 10925,
+      "quantity": 1,
+      "name": "Sanfew serum(4)"
+    },
+    {
+      "itemId": 10925,
+      "quantity": 1,
+      "name": "Sanfew serum(4)"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 6685,
+      "quantity": 1,
+      "name": "Saradomin brew(4)"
+    },
+    {
+      "itemId": 10925,
+      "quantity": 1,
+      "name": "Sanfew serum(4)"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 6685,
+      "quantity": 1,
+      "name": "Saradomin brew(4)"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 26374,
+      "quantity": 1,
+      "name": "Zaryte crossbow"
+    },
+    {
+      "itemId": 21000,
+      "quantity": 1,
+      "name": "Twisted buckler"
+    },
+    {
+      "itemId": 6685,
+      "quantity": 1,
+      "name": "Saradomin brew(4)"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 27238,
+      "quantity": 1,
+      "name": "Masori body (f)"
+    },
+    {
+      "itemId": 27241,
+      "quantity": 1,
+      "name": "Masori chaps (f)"
+    },
+    {
+      "itemId": 6685,
+      "quantity": 1,
+      "name": "Saradomin brew(4)"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 27690,
+      "quantity": 1,
+      "name": "Voidwaker"
+    },
+    {
+      "itemId": 11283,
+      "quantity": 1,
+      "name": "Dragonfire shield"
+    },
+    {
+      "itemId": 6685,
+      "quantity": 1,
+      "name": "Saradomin brew(4)"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 29796,
+      "quantity": 1,
+      "name": "Noxious halberd"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 13441,
+      "quantity": 1,
+      "name": "Anglerfish"
+    },
+    {
+      "itemId": 27086,
+      "quantity": 1,
+      "name": "Rune pouch"
+    }
+  ]
+}
