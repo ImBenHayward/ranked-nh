@@ -22,7 +22,7 @@ import net.runelite.client.util.Text;
 /** Marks the setting to fix, independently of which tab contains Confirm. Never intercepts input. */
 final class ArenaSetupWarningOverlay extends Overlay {
     static final Color WARNING=new Color(239,107,100);
-    static final Color NEXT=new Color(155,211,173);
+    static final Color NEXT=RankedNhPanel.ACCENT;
     private final Client client;
     private final RankedNhPlugin plugin;
     private final TooltipManager tooltips;
@@ -104,7 +104,7 @@ final class ArenaSetupWarningOverlay extends Overlay {
             g.setColor(NEXT);g.setStroke(new BasicStroke(1.5f));g.drawRect(bounds.x,bounds.y,bounds.width-1,bounds.height-1);
             g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,10));String text="+"+count;
             int width=g.getFontMetrics().stringWidth(text)+4,x=bounds.x+bounds.width-width,y=bounds.y+bounds.height-12;
-            g.setColor(new Color(27,30,34));g.fillRect(x,y,width,12);g.setColor(NEXT);g.drawString(text,x+2,y+10);
+            g.setColor(new Color(27,30,34));g.fillRect(x,y,width,12);g.setColor(RankedNhPanel.TEXT);g.drawString(text,x+2,y+10);
         }finally{g.dispose();}
     }
     private void guide(Graphics2D graphics,int group,String text,Color color){

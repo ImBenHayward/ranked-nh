@@ -43,7 +43,7 @@ public class ArenaItemCatalogTest {
     }
     @Test public void disablingOrLeavingSetupRestoresTheCatalogue(){
         apply();catalog.enabled(false);assertFalse(excluded.hidden);assertEquals(64,last.y);
-        catalog.enabled(true);apply();catalog.maintain(false);assertFalse(excluded.hidden);assertEquals(96,list.height);
+        catalog.enabled(true);apply();catalog.maintain(false,null);assertFalse(excluded.hidden);assertEquals(96,list.height);
     }
     @Test public void gameSearchResultsAreNeverUnhidden(){
         last.hidden=true;hotspot.hidden=true;apply();
@@ -70,6 +70,14 @@ public class ArenaItemCatalogTest {
         list.children=new Widget[]{excluded.widget};catalog.apply(list.widget,Set.of(1,3));
         assertTrue(excluded.hidden);assertEquals(0,list.height);assertFalse(catalog.notice().isEmpty());
         catalog.clear();assertFalse(excluded.hidden);assertEquals(96,list.height);assertTrue(catalog.notice().isEmpty());
+    }
+    @Test public void reachingTheLimitHidesARowAndRemovingTheItemBringsItBack(){
+        apply();catalog.apply(list.widget,Set.of(3));
+        assertTrue(first.hidden);assertTrue(excluded.hidden);assertEquals(0,last.y);assertEquals(32,list.height);
+        catalog.apply(list.widget,Set.of(1,3));
+        assertFalse(first.hidden);assertTrue(excluded.hidden);assertEquals(32,last.y);
+        catalog.apply(list.widget,Set.of());assertTrue(first.hidden);assertTrue(last.hidden);assertEquals(0,list.height);
+        catalog.clear();assertFalse(first.hidden);assertFalse(excluded.hidden);assertEquals(64,last.y);
     }
     @Test public void completeKitHasNoAdditionsAndOmissionsAreOptional(){
         ArenaKit base=TestArenaKit.DEFAULT.kit();assertTrue(catalog.optional(base).isEmpty());

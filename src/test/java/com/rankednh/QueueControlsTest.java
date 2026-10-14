@@ -72,6 +72,51 @@ public class QueueControlsTest {
             button(panel,"Find a match").doClick();assertEquals(List.of("leave","queue EU"),events);
         });
     }
+    @Test public void oldResultsReturnToQueueWhileReportsAndCooldownsRemainAvailable()throws Exception{
+        SwingUtilities.invokeAndWait(()->{
+            List<String> events=new ArrayList<>();Models.Status s=status();
+            RankedNhPanel panel=new RankedNhPanel(actions(events));
+            s.match=new Models.Match();s.match.state="complete";s.match.winner="other";
+            s.match.opponent=new Models.Opponent();s.match.opponent.rsn="Previous opponent";s.match.score=new int[]{0,2};
+            for(int i=0;i<3;i++){
+                panel.render(s,"",false,true,"");List<String> labels=new ArrayList<>();collectLabels(panel,labels);
+                assertTrue(labels.contains("Ranked 1v1"));assertFalse(labels.contains("Match lost"));assertFalse(labels.contains("Previous opponent"));
+                assertTrue(button(panel,"Show match report").isVisible());assertTrue(button(panel,"Find a match").isEnabled());
+            }
+            button(panel,"Find a match").doClick();assertEquals(List.of("queue EU"),events);
+            s.cooldownUntil="2026-10-14T12:01:00Z";
+            panel.render(s,"",false,true,"",null,java.time.Instant.parse("2026-10-14T12:00:00Z").toEpochMilli());
+            List<String> labels=new ArrayList<>();collectLabels(panel,labels);
+            assertTrue(labels.contains("Queue cooldown"));assertFalse(button(panel,"Find a match").isEnabled());
+        });
+    }
+    @Test public void localQueueWarningFollowsTheConnectedService()throws Exception{
+        SwingUtilities.invokeAndWait(()->{
+            Models.Status s=status();RankedNhPanel panel=new RankedNhPanel(actions(new ArrayList<>()));
+            for(String url:List.of("http://127.0.0.1:8787","http://localhost:8787","http://[::1]:8787")){
+                panel.service(url);panel.render(s,"",false,true,"");
+                List<String> labels=new ArrayList<>();collectLabels(panel,labels);
+                assertTrue(labels.contains("Local test"));assertTrue(labels.stream().anyMatch(t->t.contains("hosted beta cannot match")));
+            }
+            panel.service("https://ranked-nh.vercel.app");panel.render(s,"",false,true,"");
+            List<String> labels=new ArrayList<>();collectLabels(panel,labels);
+            assertFalse(labels.contains("Local test"));assertFalse(labels.stream().anyMatch(t->t.contains("hosted beta cannot match")));
+        });
+    }
+    @Test public void setupReplayIsAvailableOnlyForAnIdleVerifiedCharacter()throws Exception{
+        SwingUtilities.invokeAndWait(()->{
+            List<String> events=new ArrayList<>();Models.Status s=status();RankedNhPanel panel=new RankedNhPanel(actions(events));
+            panel.onboarding(ArenaOnboarding.Step.READY,false,false);panel.render(s,"",false,true,"");
+            AbstractButton redo=button(panel,"Redo kit setup");assertTrue(redo.isVisible());redo.doClick();
+            assertEquals(List.of("redoKitSetup"),events);
+            panel.render(s,"",true,true,"");assertFalse(redo.isEnabled());
+            s.queued=true;panel.render(s,"",false,true,"");assertFalse(redo.isVisible());
+            s.queued=false;s.match=new Models.Match();s.match.state="active";s.match.opponent=new Models.Opponent();s.match.opponent.rsn="Other";
+            panel.render(s,"",false,true,"");assertFalse(redo.isVisible());
+            s.match=null;panel.render(s,"",false,false,"");assertFalse(redo.isVisible());
+            panel.onboarding(ArenaOnboarding.Step.CRATE,true,false);panel.render(s,"",false,true,"");assertFalse(redo.isVisible());
+        });
+    }
     private static Models.Status status(){
         Models.Status s=new Models.Status();s.mode="pilot";s.regions=List.of("EU","US");s.crossRegionAfterSeconds=30;
         s.player=new Models.Player();s.player.id="test-player";s.player.rsn="Test Player";s.player.rank=new Models.Rank();
@@ -93,7 +138,7 @@ public class QueueControlsTest {
     private static void collectLabels(Container parent,List<String> labels){
         for(Component child:parent.getComponents()){
             if(child instanceof javax.swing.JLabel && child.isVisible())labels.add(((javax.swing.JLabel)child).getText().replace('\u00a0',' '));
-            if(child instanceof Container)collectLabels((Container)child,labels);
+            if(child instanceof Container && child.isVisible())collectLabels((Container)child,labels);
         }
     }
     private static javax.swing.JProgressBar progress(Container parent){
@@ -105,6 +150,7 @@ public class QueueControlsTest {
     private static RankedNhPanel.Actions actions(List<String> events){
         return (RankedNhPanel.Actions)Proxy.newProxyInstance(RankedNhPanel.Actions.class.getClassLoader(),new Class<?>[]{RankedNhPanel.Actions.class},(proxy,method,args)->{
             if(method.getName().equals("queue"))events.add("queue "+args[0]);
+            if(method.getName().equals("redoKitSetup"))events.add("redoKitSetup");
             if(method.getName().equals("leave"))events.add("leave");return null;
         });
     }

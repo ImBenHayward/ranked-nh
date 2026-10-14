@@ -23,6 +23,7 @@ final class ArenaItemCatalog {
     private volatile String notice="";
     private Widget list;
     private Widget[] children;
+    private Set<Integer> shownItems=Set.of();
     private int originalHeight,originalScroll,filteredHeight;
     private final List<Cell> cells=new ArrayList<>();
     private static final class Cell {
@@ -47,14 +48,17 @@ final class ArenaItemCatalog {
         Widget widget=client.getWidget(id);
         return widget==null || widget.isHidden()?null:widget;
     }
-    void maintain(boolean active){
+    void maintain(boolean active,ArenaKit kit){
         Widget current=active && enabled?visibleList():null;
         if(current==null){clear();return;}
-        apply(current,reference.kit().itemTotals().keySet());
+        if(kit==null || !kit.complete()){clear();return;}
+        Set<Integer> available=optional(kit).keySet();
+        apply(current,available);
+        if(available.isEmpty() && list!=null)notice="All default items are already included.";
     }
     void apply(Widget current,Set<Integer> allowed){
         if(list!=null){
-            if(current==list && intact())return;
+            if(current==list && allowed.equals(shownItems) && intact())return;
             clear();
         }
         Widget[] items=current.getDynamicChildren();if(items==null || items.length==0)return;
@@ -65,7 +69,7 @@ final class ArenaItemCatalog {
         }
         // Empty search results are valid; a layout with no item-bearing rows is not ours to reshape.
         if(rows.values().stream().noneMatch(row->row.stream().anyMatch(w->w.getItemId()>0)))return;
-        list=current;children=items.clone();originalHeight=current.getScrollHeight();originalScroll=current.getScrollY();
+        list=current;children=items.clone();shownItems=Set.copyOf(allowed);originalHeight=current.getScrollHeight();originalScroll=current.getScrollY();
         int shown=0;
         for(Map.Entry<Integer,List<Widget>> row:rows.entrySet()){
             boolean keep=row.getValue().stream().anyMatch(w->allowed.contains(w.getItemId()));
@@ -80,7 +84,7 @@ final class ArenaItemCatalog {
             if(visible)shown++;
         }
         filteredHeight=shown*ROW_HEIGHT;
-        notice=shown==0?"No approved items match this search.":"";
+        notice=shown==0?"No missing approved items match this search.":"";
         current.setScrollHeight(filteredHeight);current.setScrollY(Math.min(originalScroll,Math.max(0,filteredHeight-current.getHeight())));
         current.revalidateScroll();
     }
@@ -97,7 +101,7 @@ final class ArenaItemCatalog {
             for(Cell cell:cells){cell.widget.setHidden(cell.hidden);cell.widget.setOriginalY(cell.y);cell.widget.revalidate();}
             list.setScrollHeight(originalHeight);list.setScrollY(originalScroll);list.revalidateScroll();
         }
-        list=null;children=null;cells.clear();notice="";
+        list=null;children=null;shownItems=Set.of();cells.clear();notice="";
     }
     Map<Integer,Integer> optional(ArenaKit kit){return kit==null || !kit.complete()?Map.of():kit.availableFrom(reference.kit());}
 }

@@ -54,6 +54,12 @@ final class ArenaOnboarding {
         if("demo".equals(status.mode))return true;
         return ready && Objects.equals(owner,key(service,status));
     }
+    boolean restart(String service,Models.Status status,boolean accountMatches,boolean fighting){
+        String key=key(service,status);
+        if(key==null || !accountMatches || fighting || !idle(status) || "demo".equals(status.mode))return false;
+        verified.forget(key);owner=key;ready=false;correctSince=-1;step=Step.HOP;
+        return true;
+    }
     void interrupt(){correctSince=-1;}
     Step step(){return step;}
     private String key(String service,Models.Status status){

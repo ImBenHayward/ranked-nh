@@ -126,7 +126,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         mouseManager.unregisterMouseWheelListener(reportOverlay.input);
         keyManager.unregisterKeyListener(reportOverlay.input);
         reportOverlay.input.focusLost();
-        SwingUtilities.invokeLater(()->{if(navigation!=null)toolbar.removeNavigation(navigation);panel=null;});
+        SwingUtilities.invokeLater(()->{if(panel!=null)panel.dispose();if(navigation!=null)toolbar.removeNavigation(navigation);panel=null;});
     }
     @Provides RankedNhConfig provideConfig(ConfigManager manager){return manager.getConfig(RankedNhConfig.class);}
     Models.Status status(){return status;}
@@ -236,6 +236,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     private void openPanel(){SwingUtilities.invokeLater(()->{if(running && navigation!=null)toolbar.openPanel(navigation);});}
     private void refresh(){SwingUtilities.invokeLater(()->{
         if(panel==null || !running)return;
+        panel.service(baseUrl);
         MatchupView view=handoffView();
         Models.Status current=status;
         if(config.previewMatchup() && (current==null || (!current.queued && (current.match==null || !current.match.isOpen()))))view=MatchupView.preview(previewStage);
@@ -321,8 +322,9 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         finally{fetchingRanks.set(false);}
     }
     @Subscribe(priority=-1) public void onClientTick(ClientTick event){
-        itemCatalog.maintain(running && accountMatches && !battleArea && setupView!=null && setupView.kit!=null &&
-            setupView.kit.complete() && !"Wrong opponent".equals(setupView.heading));
+        ArenaSetup.View currentSetup=setupView;
+        itemCatalog.maintain(running && accountMatches && !battleArea && currentSetup!=null && currentSetup.kit!=null &&
+            currentSetup.kit.complete() && !"Wrong opponent".equals(currentSetup.heading),currentSetup==null?null:currentSetup.kit);
         if(!client.isMenuOpen())rankMenuIcons.decorate(client.getMenuEntries(),status);
     }
     @Override public void filterCatalog(boolean enabled){clientThread.invoke(()->{itemCatalog.enabled(enabled);refresh();});}
@@ -370,6 +372,12 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     @Override public void forfeit(){matchCommand("/forfeit",Map.of("confirm",true));}
     @Override public void review(){matchCommand("/review",Map.of());}
     @Override public void endTest(){matchCommand("/end-test",Map.of());}
+    @Override public void redoKitSetup(){
+        clientThread.invoke(()->{
+            if(!running || !onboarding.restart(baseUrl,status,accountMatches,ArenaCombat.inBattle(client)))return;
+            updateHandoff();refresh();openPanel();
+        });
+    }
     @Override public void showReport(){configManager.setConfiguration("rankednh","showMatchReport",true);reportOverlay.reopen();}
     @Override public void previewRank(RankPreview scenario){
         clientThread.invoke(()->{
@@ -400,8 +408,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         });
     }
     @Override public void leaderboard(){
-        try{LinkBrowser.browse(RankedNhApi.validateUrl(config.serviceUrl())+"/");}
-        catch(IllegalArgumentException e){problem=e.getMessage();refresh();}
+        LinkBrowser.browse("https://ranked-nh.vercel.app/#leaderboard");
     }
     @Override public void joinDiscord(){LinkBrowser.browse("https://discord.gg/3fsrUg6VR");}
     @Override public void history(){

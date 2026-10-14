@@ -76,5 +76,29 @@ public class ArenaOnboardingTest {
         observe(true,true,true,new ArenaKit(241,0,1,0,kit.equipment,bag),1800);
         assertFalse(onboarding.canQueue(SERVICE,status,true));
     }
-
+    @Test public void restartClearsOnlyThisCharactersCheckAndRequiresAnotherStableRead(){
+        verify();
+        ArenaOnboarding other=new ArenaOnboarding(TestArenaKit.DEFAULT,store);Models.Status second=status("b");
+        other.observe(SERVICE,second,true,true,false,true,true,view(kit),0);
+        other.observe(SERVICE,second,true,true,false,true,true,view(kit),1200);
+        String both=saved.get();assertTrue(onboarding.restart(SERVICE,status,true,false));assertNotEquals(both,saved.get());
+        assertFalse(onboarding.canQueue(SERVICE,status,true));
+        onboarding=new ArenaOnboarding(TestArenaKit.DEFAULT,store);
+        observe(true,false,false,null,2000);assertEquals(ArenaOnboarding.Step.CRATE,onboarding.step());
+        assertFalse(onboarding.canQueue(SERVICE,status,true));
+        other=new ArenaOnboarding(TestArenaKit.DEFAULT,store);
+        other.observe(SERVICE,second,true,true,false,false,false,null,2000);
+        assertTrue(other.canQueue(SERVICE,second,true));
+        observe(true,true,true,kit,3000);observe(true,true,true,kit,3600);assertFalse(onboarding.canQueue(SERVICE,status,true));
+        observe(true,true,true,kit,4200);assertTrue(onboarding.canQueue(SERVICE,status,true));
+    }
+    @Test public void restartCannotInterruptAQueueMatchOrDifferentLoggedInCharacter(){
+        verify();String before=saved.get();
+        assertFalse(onboarding.restart(SERVICE,status,false,false));
+        assertFalse(onboarding.restart(SERVICE,status,true,true));
+        status.queued=true;assertFalse(onboarding.restart(SERVICE,status,true,false));status.queued=false;
+        status.match=new Models.Match();status.match.state="active";
+        assertFalse(onboarding.restart(SERVICE,status,true,false));assertEquals(before,saved.get());
+        assertTrue(onboarding.canQueue(SERVICE,status,true));
+    }
 }

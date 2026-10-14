@@ -5,7 +5,7 @@ final class MatchupView
 {
     String key,heading,opponent,destination,message,primary,action,secondary="Open panel",secondaryAction="panel",footer="";
     String region; int world; Models.Rank opponentRank;
-    boolean enabled,secondaryEnabled=true,compact,preview;
+    boolean enabled,secondaryEnabled=true,compact,preview,travel;
     static String key(Models.Status s){return s.match.id+":"+s.match.state+":"+s.match.round;}
     static MatchupView from(Models.Status s,boolean accountMatches,boolean busy,int world,boolean arena,boolean nearby,boolean hopping,boolean fighting,long now){
         if(!accountMatches || s==null || s.match==null || s.queued)return null;
@@ -23,22 +23,22 @@ final class MatchupView
             v.secondaryEnabled=m.accepted || (!busy && seconds>0);
             v.footer=m.accepted?"Both players must accept before travelling.":"Declining starts a queue cooldown.";
         }else if("preparing".equals(m.state)){
-            v.heading="Preparing fight "+m.round;
+            v.heading="Meet your opponent";
             if(world!=m.world || !arena){
-                v.message=hopping?"Finding Arena world…":"Choose World "+m.world+" in the game’s world switcher.";
+                v.travel=true;v.message="";
                 v.primary=hopping?"Finding world…":"Open world switcher";v.action="hop";
                 v.heading="Head to the Arena";
                 v.enabled=!busy && !hopping && !"demo".equals(s.mode);
-                v.footer="demo".equals(s.mode)?"Demo world only. No real Arena destination.":"Your opponent will be marked when nearby.";
+                v.footer="demo".equals(s.mode)?"Demo world only. No real Arena destination.":"";
             }else{
-                v.message=!nearby?"Waiting for "+v.opponent+" nearby…":m.ready?"You're checked in. Waiting for your opponent's client.":"Opponent found. Checking you in…";
+                v.message=!nearby?"Find your opponent in the lobby.":m.ready?"Waiting for your opponent.":"Checking you in…";
                 v.primary="";v.action="panel";v.enabled=false;
                 v.footer="";
             }
             if(MatchFoundAlert.secondsLeft(s,now)==0){v.enabled=false;v.message="Preparation expired. Updating…";}
         }else{
             v.heading=fighting?"Fight in progress":"Challenge opponent";
-            v.message=fighting?"Recording this fight.":"Right-click your opponent → Challenge.";
+            v.message=fighting?"":"Right-click your opponent → Challenge.";
             v.primary="Open panel";v.action="panel";v.enabled=true;v.secondary="";v.secondaryAction="";
             v.footer=fighting?"":"Then choose Max/Med.";v.compact=fighting;
         }
@@ -46,9 +46,10 @@ final class MatchupView
     }
     static MatchupView preview(int stage){
         MatchupView v=new MatchupView();v.key="preview:"+stage;v.preview=true;
-        v.heading=stage==0?"Match found":stage==1?"Head to the Arena":stage==2?"Preparing fight 1":"Challenge opponent";
+        v.heading=stage==0?"Match found":stage==1?"Head to the Arena":stage==2?"Meet your opponent":"Challenge opponent";
+        v.travel=stage==1;
         v.opponent="Demo Opponent";v.destination="EU · World 558";v.region="EU";v.world=558;
-        v.message=stage==0?"57 seconds to accept":stage==1?"Choose World 558 in the game’s world switcher.":stage==2?"Opponent found. Checking you in automatically…":"Right-click your opponent → Challenge.";
+        v.message=stage==0?"57 seconds to accept":stage==1?"":stage==2?"Checking you in…":"Right-click your opponent → Challenge.";
         v.primary=stage==0?"Accept match":stage==1?"Open world switcher":stage==2?"Next preview step":"Replay preview";v.action="preview";v.enabled=true;
         v.secondary="Exit preview";v.secondaryAction="close-preview";v.footer="Sample only. No game or match actions.";
         return v;

@@ -59,7 +59,7 @@ final class MatchHistoryPanel extends JPanel {
         JPanel row=new JPanel(new BorderLayout(0,6));row.setOpaque(false);
         row.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0,0,1,0,RankedNhPanel.LINE),BorderFactory.createEmptyBorder(8,8,8,8)));
         row.setPreferredSize(new Dimension(1,64));row.setMaximumSize(new Dimension(Integer.MAX_VALUE,64));
-        Color resultColor="Won".equals(outcome(match,playerId))?RankedNhPanel.ACCENT:"Lost".equals(outcome(match,playerId))?new Color(231,156,147):RankedNhPanel.MUTED;
+        Color resultColor="Won".equals(outcome(match,playerId))?RankedNhPanel.SUCCESS:"Lost".equals(outcome(match,playerId))?new Color(231,156,147):RankedNhPanel.MUTED;
         JPanel top=new JPanel(new BorderLayout(4,0));top.setOpaque(false);
         JLabel name=label(match.opponent==null?"Opponent":match.opponent.rsn,12,RankedNhPanel.TEXT);
         if(match.opponent!=null && match.opponent.rank!=null){

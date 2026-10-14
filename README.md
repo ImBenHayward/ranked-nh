@@ -21,8 +21,10 @@ The server address is already set to `https://ranked-nh.vercel.app`. Normal Plug
 1. Choose EU or US. On your first visit, use **Open world switcher**, select the suggested Arena world and open **Supplies → Max/Med kit**. Fix any listed differences; **Find a match** unlocks once the check passes. The check is remembered for that character. **Cancel search** leaves the queue.
 2. Accept the matchup in the sidebar. You can enable a sound and RuneLite notification for new matches.
 3. Once both players accept, click **Open world switcher**, then select the assigned Arena world yourself. The plugin marks your opponent when they are nearby.
-4. Challenge that player through the Arena, then select **Max/Med**. **Allowed items only** filters the item catalogue. Green counts show optional additions; red outlines mark forbidden items, excess quantities or incorrect settings. Any default item can be left out, and players can bring different subsets. Worn and carried copies count together toward the default limits. Ancient Magicks and all runes enabled are required. Follow **Opponent's kit**, then **Confirm** when both kits pass.
+4. Challenge that player through the Arena, then select **Max/Med**. **Allowed & missing only** shows approved items still below their quantity limit. Catalogue +counts show optional additions; warning outlines on your kit mark forbidden items, excess quantities or incorrect settings. Any default item can be left out, and players can bring different subsets. Worn and carried copies count together toward the default limits. Ancient Magicks and all runes enabled are required. Follow **Opponent's kit**, then **Confirm** when both kits pass.
 5. Play until one player has won two fights. Wait for both round reports before starting the next fight.
+
+First-time setup marks the supplies crate with an outline and a ground arrow. Use **Redo kit setup** while idle to repeat that check for your character without resetting ratings or history.
 
 The plugin does not challenge players, change your loadout, click confirmation buttons or perform combat actions. **Copy Load-out** copies the opponent's current kit, so it is only useful when that kit is correct. Ranked NH does not provide a reset-to-default button.
 
@@ -36,7 +38,7 @@ Five completed rated series determine your first beta rank. Divisions run from *
 
 ## If something goes wrong
 
-- **The queue is quiet:** both players need to be connected and searching. Cross-region matching opens after 30 seconds.
+- **The queue is quiet:** both players need to be connected to the same service and searching. Cross-region matching opens after 30 seconds. The allowed rating gap also widens while you wait, so players with different ratings can take longer to match.
 - **The queue button is unavailable:** check that you are on the invited character and have completed the supplies-crate kit check. Any queue cooldown is shown with its reason and end time.
 - **Kit issue:** hover a red outline to see what to remove or change. Missing items are allowed. Substitutions outside the default list and quantities above its limits are not. Both players are checked independently.
 - **A match is under review:** return to the lobby and contact the organiser. During an unrated test, **End test match** lets you leave the series without changing ratings.

@@ -19,6 +19,7 @@ public class MatchupPreview
         public void ready(){} public void forfeit(){} public void review(){} public void leaderboard(){} public void history(){} public void showReport(){}
     };
     public static void main(String[] args)throws Exception{
+        javax.swing.UIManager.setLookAndFeel(new net.runelite.client.ui.laf.RuneLiteLAF());
         File output=new File(args[0]);
         SwingUtilities.invokeAndWait(()->{
             try{

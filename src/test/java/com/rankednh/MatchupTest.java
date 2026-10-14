@@ -35,9 +35,9 @@ public class MatchupTest
     }
     @Test public void handoffExplainsManualWorldSelectionThenChecksArrival(){
         Models.Status s=status();s.match.state="preparing";
-        MatchupView v=MatchupView.from(s,true,false,301,false,false,false,false,0);assertEquals("hop",v.action);assertTrue(v.enabled);assertEquals("Open world switcher",v.primary);assertTrue(v.message.contains("Choose World 558"));
+        MatchupView v=MatchupView.from(s,true,false,301,false,false,false,false,0);assertEquals("hop",v.action);assertTrue(v.enabled);assertEquals("Open world switcher",v.primary);assertTrue(v.travel);assertEquals("",v.message);
         v=MatchupView.from(s,true,false,301,false,false,true,false,0);assertFalse(v.enabled);
-        v=MatchupView.from(s,true,false,558,true,true,false,false,0);assertEquals("panel",v.action);assertEquals("Opponent found. Checking you in…",v.message);assertFalse(v.enabled);
+        v=MatchupView.from(s,true,false,558,true,true,false,false,0);assertEquals("panel",v.action);assertEquals("Checking you in…",v.message);assertFalse(v.enabled);
         s.match.ready=true;assertFalse(MatchupView.from(s,true,false,558,true,true,false,false,0).enabled);
         s.match.state="active";v=MatchupView.from(s,true,false,558,true,true,false,true,0);assertTrue(v.compact);assertEquals("panel",v.action);
     }
@@ -103,6 +103,35 @@ public class MatchupTest
             panel.render(s,"",false,true,"",MatchupView.from(s,true,false,301,false,false,false,false,0));
             button(panel,"Accept match").doClick();assertEquals(List.of("one:offered:1/accept"),calls);
         });
+    }
+    @Test public void travelShowsTheDestinationAndActionThenOpponentReturnsInTheLobby()throws Exception{
+        SwingUtilities.invokeAndWait(()->{
+            RankedNhPanel panel=panel(new ArrayList<>());Models.Status s=status();
+            s.player.rank=new Models.Rank();s.player.rank.name="Unranked";s.player.rank.badge="unranked";
+            s.match.state="preparing";s.match.round=3;s.match.score=new int[]{1,1};
+            MatchupView travel=MatchupView.from(s,true,false,301,false,false,false,false,0);
+            panel.render(s,"",false,true,"",travel);
+            List<String> labels=visibleLabels(panel);
+            assertTrue(labels.contains("EU · World 558"));assertFalse(labels.contains("Other Main"));
+            assertFalse(labels.stream().anyMatch(t->t.contains("<span")));
+            assertTrue(button(panel,"Open world switcher").isVisible());
+            assertFalse(button(panel,"Leaderboard ↗").getParent().isVisible());
+            travel.message="World list unavailable. Try again.";panel.render(s,"",false,true,"",travel);
+            assertTrue(visibleLabels(panel).stream().anyMatch(t->t.contains("World list unavailable")));
+            panel.render(s,"",false,true,"",MatchupView.from(s,true,false,558,true,true,false,false,0));
+            assertTrue(visibleLabels(panel).contains("Other Main"));
+            s.match.state="active";panel.render(s,"",false,true,"",MatchupView.from(s,true,false,558,true,true,false,true,0));
+            assertTrue(visibleLabels(panel).stream().anyMatch(t->t.contains("<span")));
+            s.match.state="complete";panel.render(s,"",false,true,"");
+            assertTrue(button(panel,"Leaderboard ↗").getParent().isVisible());panel.dispose();
+        });
+    }
+    private static List<String> visibleLabels(Container parent){
+        List<String> text=new ArrayList<>();
+        for(Component child:parent.getComponents())if(child.isVisible()){
+            if(child instanceof javax.swing.JLabel)text.add(((javax.swing.JLabel)child).getText());
+            if(child instanceof Container)text.addAll(visibleLabels((Container)child));
+        }return text;
     }
     @Test public void rankPreviewIsExplicitAndDiagnosticsStayOutOfTheMainFlow()throws Exception{
         SwingUtilities.invokeAndWait(()->{

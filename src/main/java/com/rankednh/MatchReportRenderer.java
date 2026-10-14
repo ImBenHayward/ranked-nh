@@ -37,7 +37,7 @@ final class MatchReportRenderer
             g.setColor(new Color(10,12,15,70));g.fillRoundRect(-4,4,WIDTH+8,HEIGHT+4,8,8);
             g.setColor(BG);g.fillRect(0,0,WIDTH,HEIGHT);g.setColor(LINE);g.drawRect(0,0,WIDTH-1,HEIGHT-1);
             Color accent=view.decided?(view.won?WIN:LOSS):ACCENT;
-            g.setColor(accent);g.fillRect(0,0,WIDTH,3);
+            g.setColor(ACCENT);g.fillRect(0,0,WIDTH,3);
             text(g,view.heading,24,26,11,MUTED,false);
             control(g,MatchReportLayout.CLOSE,1,hovered,focused,pressed,false);
             g.setColor(TEXT);g.setStroke(new BasicStroke(2));
@@ -65,7 +65,7 @@ final class MatchReportRenderer
             fitted(g,view.note,24,267,WIDTH-48,10,MUTED,false);
 
             control(g,MatchReportLayout.CONTINUE,2,hovered,focused,pressed,true);
-            centered(g,"Continue",344,298,12,ACCENT,true);
+            centered(g,"Continue",344,298,12,Color.WHITE,true);
             text(g,"Esc to close",24,298,11,MUTED,false);
         } finally {g.dispose();}
     }
@@ -143,10 +143,11 @@ final class MatchReportRenderer
         g.fillRect(24,y,fill,height);
     }
     private static void control(Graphics2D g,Rectangle r,int id,int hovered,int focused,int pressed,boolean primary) {
-        Color fill=primary?new Color(49,69,58):BG;
-        if(hovered==id)fill=primary?new Color(61,84,71):LINE;
-        if(pressed==id)fill=primary?new Color(39,57,47):new Color(78,82,90);
+        Color fill=primary?RankedNhPanel.ACCENT_SURFACE:BG;
+        if(hovered==id)fill=primary?RankedNhPanel.ACCENT_HOVER:LINE;
+        if(pressed==id)fill=primary?RankedNhPanel.ACCENT_PRESSED:new Color(78,82,90);
         g.setColor(fill);g.fill(r);
+        if(primary){g.setColor(ACCENT);g.setStroke(new BasicStroke(1));g.drawRect(r.x,r.y,r.width,r.height);}
         if(focused==id){g.setStroke(new BasicStroke(2));g.setColor(TEXT);g.drawRect(r.x-4,r.y-4,r.width+8,r.height+8);}
     }
     private static void divider(Graphics2D g,int y){g.setStroke(new BasicStroke(1));g.setColor(LINE);g.drawLine(24,y,WIDTH-24,y);}

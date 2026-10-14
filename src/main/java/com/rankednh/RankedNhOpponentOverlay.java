@@ -37,7 +37,7 @@ final class RankedNhOpponentOverlay extends Overlay
         try{
             g.clipRect(client.getViewportXOffset(),client.getViewportYOffset(),client.getViewportWidth(),client.getViewportHeight());
             Polygon tile=opponent.getCanvasTilePoly();
-            if(tile!=null)OverlayUtil.renderPolygon(g,tile,RankedNhPanel.ACCENT,new Color(155,198,173,28),new BasicStroke(2));
+            if(tile!=null)OverlayUtil.renderPolygon(g,tile,RankedNhPanel.ACCENT,new Color(236,4,4,28),new BasicStroke(2));
             String current=Text.removeTags(opponent.getName());
             String currentBadge=status.match.opponent.rank==null?"unranked":status.match.opponent.rank.badge;
             if(!current.equals(name) || !java.util.Objects.equals(currentBadge,badge)){

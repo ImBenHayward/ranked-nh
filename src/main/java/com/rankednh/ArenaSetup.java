@@ -89,7 +89,7 @@ final class ArenaSetup
         if(!yours || opponent!=null && opponent.complete() && !theirs){
             String heading=!yours?(opponent!=null && opponent.complete() && !theirs?"Fix both kits":"Fix your kit"):"Opponent needs to fix their kit";
             String recovery=yours?"Your kit is ready. Your opponent needs to fix the red-marked items or settings.":
-                "Fix the red marks. Any default item can be left out; green additions are optional.";
+                "Fix the marked items or settings in your kit. Any default item can be left out.";
             View view=new View(heading,"Use only approved items, within their quantity limits.",recovery,true,own);
             List<ArenaKit.Change> changes=new ArrayList<>(own.defaultChanges(defaultKit.kit(),false));
             if(opponent!=null && opponent.complete())changes.addAll(opponent.defaultChanges(defaultKit.kit(),true));
@@ -99,10 +99,10 @@ final class ArenaSetup
             view.target=!yours?Target.MAX_MED_TAB:Target.OPPONENT_TAB;
             return view;
         }
-        if(!duel)return new View("Kit ready","Find a match in the NH panel.","Green additions are optional. Arrange and equip approved items however you like.",false,own);
+        if(!duel)return new View("Kit ready","Find a match in the NH panel.","Highlighted additions are optional. Arrange and equip approved items however you like.",false,own);
         if(confirmed!=null && !confirmed.differences(own).isEmpty())
             return new View("Kit changed","Your kit changed after confirmation.","Check both kits and confirm again.",true,own);
-        if(opponent==null || !opponent.complete())return new View("Your kit is ready","Open Opponent's kit to check theirs.","Your items are allowed. Green additions are optional.",false,own).guide(Target.OPPONENT_TAB);
+        if(opponent==null || !opponent.complete())return new View("Your kit is ready","Open Opponent's kit to check theirs.","Your items are allowed. Highlighted additions are optional.",false,own).guide(Target.OPPONENT_TAB);
         View matched=new View("Both kits ready",acceptedKit?"Waiting for your opponent.":"Both kits meet the Max/Med rules.",acceptedKit?"The duel starts when you have both confirmed.":"Click Confirm on Opponent's kit to enter the duel.",false,own).guide(acceptedKit?Target.NONE:Target.KIT_CONFIRM);
         matched.comparisonKnown=true;matched.opponentKit=opponent;return matched;
     }

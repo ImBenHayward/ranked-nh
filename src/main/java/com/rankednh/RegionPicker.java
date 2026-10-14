@@ -30,7 +30,7 @@ final class RegionPicker extends JPanel {
             for(String region:regions){
                 JToggleButton button=new JToggleButton(region,new RegionFlag(region));
                 button.setActionCommand(region);button.setIconTextGap(6);button.setFont(new Font(Font.SANS_SERIF,Font.BOLD,12));
-                button.setContentAreaFilled(false);button.setOpaque(true);button.setFocusPainted(false);
+                button.setContentAreaFilled(true);button.setOpaque(true);button.setFocusPainted(false);
                 button.setToolTipText(MatchFoundAlert.region(region));
                 button.getAccessibleContext().setAccessibleName(MatchFoundAlert.region(region)+" preferred region");
                 Runnable style=()->style(button);
@@ -48,11 +48,11 @@ final class RegionPicker extends JPanel {
     }
     private static void style(JToggleButton button){
         boolean selected=button.isSelected(),enabled=button.isEnabled();
-        Color fill=selected?new Color(49,69,58):RankedNhPanel.SURFACE;
-        if(enabled && button.getModel().isRollover())fill=selected?new Color(61,84,71):new Color(44,50,53);
+        Color fill=selected?new Color(63,68,73):RankedNhPanel.SURFACE;
+        if(enabled && button.getModel().isRollover())fill=selected?new Color(76,81,87):new Color(44,50,53);
         if(enabled && button.getModel().isPressed())fill=RankedNhPanel.BG;
-        button.setBackground(fill);button.setForeground(enabled?(selected?RankedNhPanel.ACCENT:RankedNhPanel.TEXT):RankedNhPanel.MUTED);
+        button.setBackground(fill);button.setForeground(enabled?RankedNhPanel.TEXT:RankedNhPanel.MUTED);
         button.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(
-            button.hasFocus()?RankedNhPanel.ACCENT:selected?new Color(65,89,74):RankedNhPanel.LINE),BorderFactory.createEmptyBorder(6,8,6,8)));
+            enabled && button.hasFocus()?RankedNhPanel.TEXT:selected?RankedNhPanel.MUTED:RankedNhPanel.LINE),BorderFactory.createEmptyBorder(6,8,6,8)));
     }
 }

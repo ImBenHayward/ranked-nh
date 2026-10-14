@@ -15,6 +15,7 @@ import javax.swing.SwingUtilities;
 /** Render the real sidebar at each first-time step with synthetic data. */
 public class OnboardingPreview {
     public static void main(String[] args)throws Exception{
+        javax.swing.UIManager.setLookAndFeel(new net.runelite.client.ui.laf.RuneLiteLAF());
         SwingUtilities.invokeAndWait(()->{
             try{
                 BufferedImage image=new BufferedImage(1020,1000,BufferedImage.TYPE_INT_RGB);
@@ -31,7 +32,9 @@ public class OnboardingPreview {
                     ArenaSetup.View setup=null;ArenaKit kit=TestArenaKit.DEFAULT.kit();
                     if(i==2){ArenaKit wrong=new ArenaKit(241,0,0,kit.runePouch,kit.equipment,kit.inventory);setup=TestArenaKit.SETUP.describe(false,0,0,false,false,wrong,null,null);}
                     if(i==3)setup=TestArenaKit.SETUP.describe(false,0,0,false,false,kit,null,null);
-                    panel.renderSetup(setup,"",false);panel.renderOnboarding(setup);panel.setSize(240,940);layout(panel);
+                    panel.renderSetup(setup,"",false);panel.renderOnboarding(setup);
+                    panel.renderCatalog(setup,true,i==3?"All default items are already included.":"");
+                    panel.setSize(240,940);layout(panel);layout(panel);
                     g.translate(8+i*255,40);panel.printAll(g);g.translate(-8-i*255,-40);
                 }
                 g.dispose();ImageIO.write(image,"png",new File(args[0]));
