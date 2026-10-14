@@ -6,10 +6,39 @@ import java.util.ArrayList;
 import java.util.List;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.http.api.RuneLiteAPI;
+import net.runelite.http.api.worlds.World;
+import net.runelite.http.api.worlds.WorldResult;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class ArenaWorldGuideTest {
+    // The live world feed uses named regions, with no legacy location field.
+    private static final String WORLD_FEED="{\"worlds\":["+
+        "{\"id\":301,\"types\":[\"MEMBERS\"],\"region\":\"UNITED_STATES_OF_AMERICA\",\"players\":500},"+
+        "{\"id\":578,\"types\":[\"MEMBERS\",\"PVP_ARENA\"],\"region\":\"UNITED_STATES_OF_AMERICA\",\"players\":47},"+
+        "{\"id\":558,\"types\":[\"MEMBERS\",\"PVP_ARENA\"],\"region\":\"UNITED_KINGDOM\",\"players\":34},"+
+        "{\"id\":570,\"types\":[\"MEMBERS\",\"PVP_ARENA\"],\"region\":\"AUSTRALIA\",\"players\":4}]}";
+    @Test public void namedRegionsResolveBothOnboardingAndAssignedWorlds(){
+        WorldResult feed=RuneLiteAPI.GSON.fromJson(WORLD_FEED,WorldResult.class);
+        assertEquals(558,ArenaWorldGuide.destination(feed,0,"EU").getId());
+        assertEquals(578,ArenaWorldGuide.destination(feed,0,"US").getId());
+        assertEquals(570,ArenaWorldGuide.destination(feed,0,"AU").getId());
+        assertNull(ArenaWorldGuide.validate(ArenaWorldGuide.destination(feed,558,"EU"),558,"EU"));
+        assertNotNull(ArenaWorldGuide.validate(feed.findWorld(558),558,"US"));
+        assertNull(ArenaWorldGuide.destination(feed,999,"EU"));
+        assertNull(ArenaWorldGuide.destination(null,0,"EU"));
+    }
+    @Test public void missingOrUnknownRegionsCannotBecomeUsByDefault(){
+        for(String region:new String[]{"",",\"region\":\"UNKNOWN_COUNTRY\""}){
+            World world=RuneLiteAPI.GSON.fromJson("{\"id\":578,\"types\":[\"PVP_ARENA\"],\"players\":12"+region+"}",World.class);
+            assertNotNull(ArenaWorldGuide.validate(world,578,"US"));
+        }
+        WorldResult german=RuneLiteAPI.GSON.fromJson(WORLD_FEED.replace("UNITED_KINGDOM","GERMANY"),WorldResult.class);
+        assertEquals(558,ArenaWorldGuide.destination(german,0,"EU").getId());
+        WorldResult full=RuneLiteAPI.GSON.fromJson(WORLD_FEED.replace("\"players\":34","\"players\":2000"),WorldResult.class);
+        assertNull(ArenaWorldGuide.destination(full,0,"EU"));
+    }
     private final Models.Status status=MatchupTest.status();
     private final List<String> calls=new ArrayList<>();
     private boolean accountMatches=true;

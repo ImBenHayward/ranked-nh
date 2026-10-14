@@ -9,6 +9,7 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import net.runelite.http.api.worlds.World;
+import net.runelite.http.api.worlds.WorldRegion;
 import net.runelite.http.api.worlds.WorldType;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -50,7 +51,7 @@ public class MatchupTest
     }
     private World world(int id,int location,int players,WorldType... types){
         EnumSet<WorldType> set=EnumSet.noneOf(WorldType.class);for(WorldType type:types)set.add(type);
-        return World.builder().id(id).location(location).players(players).types(set).address("oldschool258a.runescape.com").activity("PvP Arena").build();
+        return World.builder().id(id).region(WorldRegion.fromLocationId(location)).players(players).types(set).address("oldschool258a.runescape.com").activity("PvP Arena").build();
     }
     @Test public void hopChecksLiveArenaTypeRegionPopulationAndExactWorld(){
         assertNull(ArenaWorldGuide.validate(world(558,1,45,WorldType.PVP_ARENA),558,"EU"));

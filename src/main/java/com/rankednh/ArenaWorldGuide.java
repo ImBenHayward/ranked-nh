@@ -7,6 +7,7 @@ import net.runelite.api.GameState;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
 import net.runelite.http.api.worlds.World;
+import net.runelite.http.api.worlds.WorldRegion;
 import net.runelite.http.api.worlds.WorldResult;
 import net.runelite.http.api.worlds.WorldType;
 
@@ -36,13 +37,21 @@ final class ArenaWorldGuide
     static boolean eligible(Models.Status s){return s!=null && s.match!=null && "preparing".equals(s.match.state) && !"demo".equals(s.mode);}
     static String validate(World destination,int assigned,String region){
         if(destination==null || destination.getId()!=assigned)return "Assigned world is unavailable. Refresh the world list and try again.";
-        if(!destination.getTypes().contains(WorldType.PVP_ARENA) || destination.getTypes().contains(WorldType.PVP) ||
+        if(destination.getTypes()==null || !destination.getTypes().contains(WorldType.PVP_ARENA) || destination.getTypes().contains(WorldType.PVP) ||
             destination.getTypes().contains(WorldType.HIGH_RISK) || destination.getTypes().contains(WorldType.DEADMAN))
             return "Assigned world is not a safe Arena destination. Ask the operator to correct it.";
-        String actual=destination.getLocation()==0?"US":destination.getLocation()==1 || destination.getLocation()==7?"EU":destination.getLocation()==3?"AU":"";
+        WorldRegion country=destination.getRegion();
+        String actual=country==WorldRegion.UNITED_STATES_OF_AMERICA?"US":
+            country==WorldRegion.UNITED_KINGDOM || country==WorldRegion.GERMANY?"EU":country==WorldRegion.AUSTRALIA?"AU":"";
         if(!actual.equals(region))return "Assigned world does not match the competition region. Ask the operator to correct it.";
         if(destination.getPlayers()<0)return "Arena world is offline. Try again shortly.";
         if(destination.getPlayers()>=2000)return "Arena world is full. Try again shortly.";
+        return null;
+    }
+    static World destination(WorldResult result,int assigned,String region){
+        if(result==null || result.getWorlds()==null)return null;
+        if(assigned>0)return result.findWorld(assigned);
+        for(World candidate:result.getWorlds())if(validate(candidate,candidate.getId(),region)==null)return candidate;
         return null;
     }
     void request(){
@@ -70,17 +79,14 @@ final class ArenaWorldGuide
         executor.execute(()->{
             World destination=null;
             try{
-                WorldResult result=worlds.getWorlds();
-                if(result!=null){
-                    if(assigned>0)destination=result.findWorld(assigned);
-                    else for(World candidate:result.getWorlds())if(validate(candidate,candidate.getId(),region)==null){destination=candidate;break;}
-                }
+                destination=destination(worlds.getWorlds(),assigned,region);
             }
             catch(RuntimeException ignored){/* Surface a retryable error without blocking the game thread. */}
             final World resolved=destination;
             clientThread.invoke(()->{
                 if(request!=generation || !busy)return;
-                String error=validate(resolved,assigned>0?assigned:resolved==null?0:resolved.getId(),region);
+                String error=assigned==0 && resolved==null?"Could not find an available "+region+" PvP Arena world. Refresh the world list and try again.":
+                    validate(resolved,assigned>0?assigned:resolved.getId(),region);
                 if(error!=null){worlds.refresh();fail(error);return;}
                 if(!current()){cancel();return;}
                 world=resolved.getId();
