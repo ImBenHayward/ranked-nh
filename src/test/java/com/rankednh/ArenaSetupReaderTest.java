@@ -90,15 +90,24 @@ public class ArenaSetupReaderTest {
         Widget[] bag=new Widget[28];for(int i=0;i<28;i++)bag[i]=item(kit.inventory.get(i).itemId,kit.inventory.get(i).quantity);
         widgets.put(140,proxy(Widget.class,(m,a)->m.equals("getDynamicChildren")?bag:false));
         ArenaSetup.View view=new ArenaSetup(TestArenaKit.DEFAULT).read(client,status(),true,false);
-        assertEquals("Opponent needs to fix their kit",view.heading);assertEquals(2,view.changes.size());
-        ArenaKit.Change change=view.changes.get(0);assertTrue(change.opponentSide);
-        assertEquals("Virtus robe top",change.location);assertEquals("Missing",change.yours);assertEquals("Virtus robe top",change.theirs);
-        ArenaKit.Change extra=view.changes.get(1);assertTrue(extra.opponentSide);assertEquals(4,extra.equipment);
-        assertEquals("Item 4712",extra.yours);assertEquals("Not required",extra.theirs);
+        assertEquals("Opponent needs to fix their kit",view.heading);assertEquals(1,view.changes.size());
+        ArenaKit.Change extra=view.changes.get(0);assertTrue(extra.opponentSide);assertEquals(4,extra.equipment);
+        assertEquals("Item 4712",extra.yours);assertTrue(extra.theirs.contains("Not allowed"));
     }
     @Test public void runeMaskListsDisabledRunesAndZeroMeansAllEnabled(){
         assertEquals("All runes enabled",ArenaSetup.runes(client,0));
         assertEquals("Disabled: Item 554, Item 556",ArenaSetup.runes(client,5));
+    }
+    @Test public void emptyWidgetPlaceholdersNeedTransmittedEvidenceBeforeAcceptingAnEmptyKit(){
+        texts.put(120,"");
+        for(int i=0;i<11;i++)widgets.put(129+i,proxy(Widget.class,(m,a)->m.equals("getDynamicChildren")?new Widget[]{item(-1,0)}:false));
+        Widget[] bag=new Widget[28];java.util.Arrays.fill(bag,item(-1,0));
+        widgets.put(140,proxy(Widget.class,(m,a)->m.equals("getDynamicChildren")?bag:false));
+        assertFalse(new ArenaSetup(TestArenaKit.DEFAULT).read(client,status(),true,false).comparisonKnown);
+        Item[] empty=new Item[42];java.util.Arrays.fill(empty,new Item(-1,0));
+        transmitted=proxy(ItemContainer.class,(m,a)->m.equals("getItems")?empty:empty[(int)a[0]]);
+        ArenaSetup.View checked=new ArenaSetup(TestArenaKit.DEFAULT).read(client,status(),true,false);
+        assertTrue(checked.comparisonKnown);assertFalse(checked.warning);
     }
     @Test public void nativeTransmittedKitTakesPrecedenceOverIdenticalButStaleDisplayedItems(){
         texts.put(120,"");texts.put(145,"Your opponent's load-out does not match yours.");ArenaKit kit=TestArenaKit.DEFAULT.kit();
@@ -112,11 +121,11 @@ public class ArenaSetupReaderTest {
             ArenaKit.Slot slot=kit.inventory.get(i);bag[i]=item(slot.itemId,slot.quantity);items[14+i]=new Item(slot.itemId,slot.quantity);
         }
         widgets.put(140,proxy(Widget.class,(m,a)->m.equals("getDynamicChildren")?bag:false));
-        items[ArenaKit.EQUIPMENT_SLOTS[4]]=new Item(-1,0);
+        items[ArenaKit.EQUIPMENT_SLOTS[4]]=new Item(4712,1);
         transmitted=proxy(ItemContainer.class,(m,a)->m.equals("getItems")?items:items[(int)a[0]]);
         ArenaSetup.View view=new ArenaSetup(TestArenaKit.DEFAULT).read(client,status(),true,false);
         assertTrue(view.warning);assertEquals("Opponent needs to fix their kit",view.heading);assertEquals(1,view.changes.size());
-        assertEquals("Virtus robe top",view.changes.get(0).theirs);assertTrue(view.changes.get(0).opponentSide);
+        assertTrue(view.changes.get(0).theirs.contains("Not allowed"));assertTrue(view.changes.get(0).opponentSide);
         assertEquals(4,view.changes.get(0).equipment);
     }
 }

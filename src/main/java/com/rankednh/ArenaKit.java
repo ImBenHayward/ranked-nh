@@ -25,8 +25,7 @@ final class ArenaKit
     }
     boolean complete(){
         return equipment.size()==11 && inventory.size()==28 && spellbook>=0 && runePouch>=0 &&
-            slots().stream().allMatch(s->s!=null && s.quantity>=0 && s.quantity<=5000 && (s.itemId>0?s.quantity>0:s.quantity==0)) &&
-            slots().stream().anyMatch(s->s.itemId>0);
+            slots().stream().allMatch(s->s!=null && s.quantity>=0 && s.quantity<=5000 && (s.itemId>0?s.quantity>0:s.quantity==0));
     }
     private List<Slot> slots(){List<Slot> all=new ArrayList<>(equipment);all.addAll(inventory);return all;}
     /** Compare possession across both containers, including duplicate items and stack quantities. */
@@ -34,6 +33,18 @@ final class ArenaKit
         Map<Integer,Integer> totals=new LinkedHashMap<>();
         for(Slot slot:slots())if(slot.itemId>0)totals.merge(slot.itemId,slot.quantity,Integer::sum);
         return totals;
+    }
+    /** Every default item is optional; the reference sets allowed IDs and maximum totals. */
+    boolean allowedBy(ArenaKit reference){
+        if(reference==null || !complete() || !reference.complete() || revision!=reference.revision ||
+            build!=reference.build || spellbook!=reference.spellbook || runePouch!=reference.runePouch)return false;
+        Map<Integer,Integer> limits=reference.itemTotals();
+        return itemTotals().entrySet().stream().allMatch(e->e.getValue()<=limits.getOrDefault(e.getKey(),0));
+    }
+    Map<Integer,Integer> availableFrom(ArenaKit reference){
+        Map<Integer,Integer> remaining=new LinkedHashMap<>(),actual=itemTotals();
+        reference.itemTotals().forEach((id,max)->{int count=max-actual.getOrDefault(id,0);if(count>0)remaining.put(id,count);});
+        return remaining;
     }
     List<String> differences(ArenaKit other){
         List<String> out=new ArrayList<>();
@@ -54,8 +65,10 @@ final class ArenaKit
             this.location=location;this.yours=yours;this.theirs=theirs;this.equipment=equipment;this.inventory=inventory;
             this.actualLabel=actualLabel;this.expectedLabel=expectedLabel;this.opponentSide=opponentSide;
         }
-        String title(){return "Default".equals(expectedLabel)?(opponentSide?"Opponent · ":"You · ")+location:location;}
-        String explanation(){return title()+"\n"+actualLabel+": "+yours+"\n"+expectedLabel+": "+theirs;}
+        String title(){return "Default".equals(expectedLabel) || "Allowed".equals(expectedLabel)?(opponentSide?"Opponent · ":"You · ")+location:location;}
+        String summary(){return "Allowed".equals(expectedLabel) && theirs.startsWith("Not allowed")?theirs:
+            actualLabel+": "+yours+"\n"+expectedLabel+": "+theirs;}
+        String explanation(){return title()+"\n"+summary();}
     }
     static String item(Slot slot){return slot.itemId<=0?"Empty":slot.name+(slot.quantity>1?" × "+slot.quantity:"");}
     List<Change> changes(ArenaKit other){
@@ -100,8 +113,20 @@ final class ArenaKit
     private int pouchSlot(){for(int i=0;i<inventory.size();i++)if(inventory.get(i).itemId==27086)return i;return -1;}
     List<Change> defaultChanges(ArenaKit reference,boolean opponent){
         List<Change> out=new ArrayList<>();
-        for(Change c:changes(reference))out.add(new Change(c.location,c.yours,c.theirs,c.equipment,c.inventory,
-            opponent?"Opponent":"Yours","Default",opponent));
+        if(reference==null || !complete() || !reference.complete())return out;
+        Map<Integer,Integer> limits=reference.itemTotals(),seen=new LinkedHashMap<>(),totals=itemTotals();
+        List<Slot> all=slots();
+        for(int i=0;i<all.size();i++){
+            Slot slot=all.get(i);if(slot.itemId<=0)continue;
+            int max=limits.getOrDefault(slot.itemId,0),count=seen.merge(slot.itemId,slot.quantity,Integer::sum);
+            if(count>max)out.add(new Change(slot.name,item(new Slot(slot.itemId,totals.get(slot.itemId),slot.name)),
+                max==0?"Not allowed. Remove this item.":"Up to "+max+" in total. Remove the extra.",
+                i<11?i:-1,i>=11?i-11:-1,opponent?"Opponent":"Yours","Allowed",opponent));
+        }
+        if(spellbook!=reference.spellbook)out.add(new Change("Spellbook",spellbookName(),reference.spellbookName(),-1,-1,
+            opponent?"Opponent":"Yours","Allowed",opponent));
+        if(runePouch!=reference.runePouch)out.add(new Change("Rune pouch",runeSelection==null?"Check your rune selection":runeSelection,
+            reference.runeSelection==null?"Different rune selection":reference.runeSelection,-1,pouchSlot(),opponent?"Opponent":"Yours","Allowed",opponent));
         return out;
     }
 }

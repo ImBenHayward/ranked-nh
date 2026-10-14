@@ -7,13 +7,12 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class ArenaSetupRegressionTest {
-    @Test public void realBodyRemovalSnapshotCannotPassEvenIfBothObservedKitsLookIdentical(){
+    @Test public void realBodyRemovalSnapshotIsAnAllowedOmission(){
         ArenaKit removed=new Gson().fromJson(new InputStreamReader(getClass().getResourceAsStream("body-removed-kit.json"),StandardCharsets.UTF_8),ArenaKit.class);
         assertEquals(-1,removed.equipment.get(4).itemId);
         ArenaSetup.View view=TestArenaKit.SETUP.describe(true,2,0,true,false,removed,removed,null);
-        assertTrue(view.warning);assertEquals("Fix both kits",view.heading);assertEquals(2,view.changes.size());
-        assertEquals("Virtus robe top",view.changes.get(0).theirs);assertFalse(view.changes.get(0).opponentSide);assertTrue(view.changes.get(1).opponentSide);
-        assertTrue(ArenaSetup.withGameCheck(view,"You and your opponent have the same options in your load-outs.").warning);
+        assertFalse(view.warning);assertTrue(view.comparisonKnown);assertTrue(view.changes.isEmpty());
+        assertFalse(ArenaSetup.withGameCheck(view,"Your load-outs do not match.").warning);
     }
     @Test public void nhMatchStaysReadyRegardlessOfNativeComparisonText(){
         ArenaKit kit=TestArenaKit.DEFAULT.kit();
@@ -23,7 +22,7 @@ public class ArenaSetupRegressionTest {
             "This load-out contains too many of certain items.","The build will not permit these items.","Ammo cannot be fired."}){
             ArenaSetup.View result=ArenaSetup.withGameCheck(local,text);
             assertSame(local,result);assertFalse(result.warning);assertTrue(result.comparisonKnown);
-            assertEquals("Default kits ready",result.heading);assertSame(kit,result.opponentKit);
+            assertEquals("Both kits ready",result.heading);assertSame(kit,result.opponentKit);
         }
     }
     @Test public void nativeTextNeverApprovesUnknownDataOrOverridesSpecificNhDifferences(){

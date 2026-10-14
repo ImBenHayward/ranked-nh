@@ -19,7 +19,7 @@ public class ArenaSetupPreview {
                 BufferedImage image=new BufferedImage(996,850,BufferedImage.TYPE_INT_RGB);
                 Graphics2D g=image.createGraphics();g.setColor(new Color(20,23,26));g.fillRect(0,0,996,850);
                 g.setColor(RankedNhPanel.TEXT);g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,14));
-                g.drawString("Arena setup preview · Select build → Check kits → Flag changes · Default-kit scenarios",12,24);
+                g.drawString("Arena setup preview · Build → Optional omission → Forbidden item → Ready",12,24);
                 for(int i=0;i<4;i++){
                     Models.Status s=MatchupTest.status();s.match.state="active";s.regions=List.of("EU","US");
                     s.player.rank=new Models.Rank();s.player.rank.name="Unranked";s.player.rank.badge="unranked";
@@ -28,12 +28,15 @@ public class ArenaSetupPreview {
                         public void ready(){}public void forfeit(){}public void review(){}public void leaderboard(){}public void history(){}public void showReport(){}
                     });
                     p.render(s,"",false,true,"",MatchupView.from(s,true,false,558,true,true,false,false,0));
-                    ArenaKit kit=TestArenaKit.DEFAULT.kit(),edited=new ArenaKit(241,0,1,1,kit.equipment,kit.inventory);edited.runeSelection="Disabled: Fire rune";
+                    ArenaKit kit=TestArenaKit.DEFAULT.kit();
+                    java.util.ArrayList<ArenaKit.Slot> bag=new java.util.ArrayList<>(kit.inventory);bag.set(21,new ArenaKit.Slot(-1,0,"Empty"));
+                    ArenaKit subset=new ArenaKit(241,0,1,0,kit.equipment,bag);
+                    bag.set(21,new ArenaKit.Slot(12817,1,"Elysian spirit shield"));ArenaKit edited=new ArenaKit(241,0,1,0,kit.equipment,bag);
                     ArenaSetup.View v=i==0?TestArenaKit.SETUP.describe(true,1,0,false,false,kit,null,null):
-                        i==1?TestArenaKit.SETUP.describe(true,2,0,true,false,kit,null,null):
-                        i==2?TestArenaKit.SETUP.describe(true,2,0,true,false,kit,kit,null):
-                        TestArenaKit.SETUP.describe(true,2,0,true,true,edited,kit,kit);
-                    p.renderSetup(v,"",false);p.setSize(225,792);layout(p);
+                        i==1?TestArenaKit.SETUP.describe(false,0,0,false,false,subset,null,null):
+                        i==2?TestArenaKit.SETUP.describe(true,2,0,true,false,edited,kit,null):
+                        TestArenaKit.SETUP.describe(true,2,0,true,false,subset,kit,null);
+                    p.renderSetup(v,"",false);p.renderCatalog(v,true);p.setSize(225,792);layout(p);
                     g.translate(12+i*249,40);p.printAll(g);g.translate(-12-i*249,-40);
                 }
                 g.dispose();ImageIO.write(image,"png",new File(args[0]));

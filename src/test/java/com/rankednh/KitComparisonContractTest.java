@@ -47,6 +47,8 @@ public class KitComparisonContractTest {
         guard.observe(status,view,false,true);guard.observe(status,null,true,true);guard.checkConfigured(original);
         assertFalse(guard.blocked());assertNotNull(guard.evidence());assertTrue(TestArenaKit.DEFAULT.matches(guard.evidence().own));
         ArrayList<ArenaKit.Slot> bag=new ArrayList<>(rearranged.inventory);bag.set(16,new ArenaKit.Slot(-1,0,"Empty"));
+        guard.checkConfigured(new ArenaKit(241,0,1,0,rearranged.equipment,bag));assertFalse(guard.blocked());assertNotNull(guard.evidence());
+        bag.set(16,new ArenaKit.Slot(12817,1,"Elysian spirit shield"));
         guard.checkConfigured(new ArenaKit(241,0,1,0,rearranged.equipment,bag));assertTrue(guard.blocked());assertNull(guard.evidence());
     }
     @Test public void quantitiesAreSummedAcrossContainersWithoutTreatingDuplicatesAsASet(){

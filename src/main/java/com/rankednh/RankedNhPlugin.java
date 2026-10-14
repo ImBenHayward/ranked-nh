@@ -70,6 +70,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
     private final MatchFoundAlert matchAlert=new MatchFoundAlert();
     private final AutoReady autoReady=new AutoReady();
     @Inject private ArenaSetup arenaSetup;
+    @Inject private ArenaItemCatalog itemCatalog;
     @Inject private ArenaRoundGuard roundGuard;
     private volatile boolean battleArea;
     private volatile Map<String,Object> pendingSetupIssue;
@@ -117,6 +118,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         running=false;token=null;status=null;serviceRated=null;pendingReport=null;pendingMatch=null;
         rankMenuIcons.cache.clear();
         clientThread.invoke(recorder::clear);overlays.remove(reportOverlay);
+        clientThread.invoke(itemCatalog::clear);
         overlays.remove(roundNoticeOverlay);pendingSetupIssue=null;pendingSetupMatch=null;submittedSetup=null;battleArea=false;
         overlays.remove(opponentOverlay);overlays.remove(opponentMinimapOverlay);overlays.remove(setupWarningOverlay);overlays.remove(suppliesOverlay);clientThread.invoke(hopper::cancel);
         reportOverlay.reset();
@@ -242,6 +244,7 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         panel.render(current,problem.isEmpty()?travelProblem:problem,requests.actionPending(),accountMatches,recording,view,serverNow());
         if(!config.previewMatchup()){
             panel.renderSetup(setupView,snapshotMessage,savingKit.get(),config.kitDiagnostics());
+            panel.renderCatalog(setupView,itemCatalog.enabled(),itemCatalog.notice());
             if(accountMatches && ArenaOnboarding.idle(current))panel.renderOnboarding(setupView);
         }
         if(roundGuard.blocked() && battleArea)panel.renderRoundIssue(roundGuard.reason());
@@ -318,8 +321,11 @@ public class RankedNhPlugin extends Plugin implements RankedNhPanel.Actions
         finally{fetchingRanks.set(false);}
     }
     @Subscribe(priority=-1) public void onClientTick(ClientTick event){
+        itemCatalog.maintain(running && accountMatches && !battleArea && setupView!=null && setupView.kit!=null &&
+            setupView.kit.complete() && !"Wrong opponent".equals(setupView.heading));
         if(!client.isMenuOpen())rankMenuIcons.decorate(client.getMenuEntries(),status);
     }
+    @Override public void filterCatalog(boolean enabled){clientThread.invoke(()->{itemCatalog.enabled(enabled);refresh();});}
     @Subscribe(priority=-1) public void onMenuOpened(MenuOpened event){rankMenuIcons.decorate(event.getMenuEntries(),status);}
     private void command(String path,Object body){
         if(token==null)return;

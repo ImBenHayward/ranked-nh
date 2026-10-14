@@ -21,14 +21,15 @@ import net.runelite.client.util.Text;
 
 /** Marks the setting to fix, independently of which tab contains Confirm. Never intercepts input. */
 final class ArenaSetupWarningOverlay extends Overlay {
-    static final Color WARNING=new Color(237,137,129);
+    static final Color WARNING=new Color(239,107,100);
     static final Color NEXT=new Color(155,211,173);
     private final Client client;
     private final RankedNhPlugin plugin;
     private final TooltipManager tooltips;
-    ArenaSetupWarningOverlay(Client client,RankedNhPlugin plugin){this(client,plugin,null);}
-    @Inject ArenaSetupWarningOverlay(Client client,RankedNhPlugin plugin,TooltipManager tooltips){
-        this.client=client;this.plugin=plugin;this.tooltips=tooltips;
+    private final ArenaItemCatalog catalog;
+    ArenaSetupWarningOverlay(Client client,RankedNhPlugin plugin){this(client,plugin,null,null);}
+    @Inject ArenaSetupWarningOverlay(Client client,RankedNhPlugin plugin,TooltipManager tooltips,ArenaItemCatalog catalog){
+        this.client=client;this.plugin=plugin;this.tooltips=tooltips;this.catalog=catalog;
         setPosition(OverlayPosition.DYNAMIC);setLayer(OverlayLayer.MANUAL);setMovable(false);
         drawAfterInterface(ArenaSetup.DUEL);drawAfterInterface(ArenaSetup.SUPPLIES);
     }
@@ -56,6 +57,7 @@ final class ArenaSetupWarningOverlay extends Overlay {
                 break;
             default:break;
         }
+        drawOptional(graphics,view);
         if(!view.warning)return null;
         Map<Rectangle,ArenaKit.Change> marked=new LinkedHashMap<>();
         for(ArenaKit.Change change:view.changes){
@@ -77,6 +79,33 @@ final class ArenaSetupWarningOverlay extends Overlay {
             }
         }
         return null;
+    }
+    private void drawOptional(Graphics2D graphics,ArenaSetup.View view){
+        if(catalog==null || view.kit==null || "Wrong opponent".equals(view.heading))return;
+        Widget list=catalog.visibleList();if(list==null)return;
+        Map<Integer,Integer> additions=catalog.optional(view.kit);
+        Widget[] children=list.getDynamicChildren();if(children==null)return;
+        Rectangle clip=list.getBounds();Graphics2D g=(Graphics2D)graphics.create();
+        try{
+            g.clip(clip);
+            for(Widget item:children)if(item!=null && !item.isHidden() && additions.containsKey(item.getItemId())){
+                Rectangle bounds=item.getBounds();if(bounds.width<=0 || bounds.height<=0 || !bounds.intersects(clip))continue;
+                int count=additions.get(item.getItemId());drawAddition(g,bounds,count);
+                if(tooltips!=null){net.runelite.api.Point mouse=client.getMouseCanvasPosition();
+                    if(bounds.intersection(clip).contains(mouse.getX(),mouse.getY()))
+                        tooltips.add(new Tooltip("Optional: add up to "+count+" more.<br>You can leave out any approved item."));
+                }
+            }
+        }finally{g.dispose();}
+    }
+    static void drawAddition(Graphics2D graphics,Rectangle bounds,int count){
+        Graphics2D g=(Graphics2D)graphics.create();
+        try{
+            g.setColor(NEXT);g.setStroke(new BasicStroke(1.5f));g.drawRect(bounds.x,bounds.y,bounds.width-1,bounds.height-1);
+            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,10));String text="+"+count;
+            int width=g.getFontMetrics().stringWidth(text)+4,x=bounds.x+bounds.width-width,y=bounds.y+bounds.height-12;
+            g.setColor(new Color(27,30,34));g.fillRect(x,y,width,12);g.setColor(NEXT);g.drawString(text,x+2,y+10);
+        }finally{g.dispose();}
     }
     private void guide(Graphics2D graphics,int group,String text,Color color){
         // Some native tabs are siblings of the frame rather than children of widget zero.
@@ -114,12 +143,10 @@ final class ArenaSetupWarningOverlay extends Overlay {
     static void drawSlots(Graphics2D graphics,Iterable<Rectangle> slots){
         Graphics2D g=(Graphics2D)graphics.create();
         try{
-            g.setColor(WARNING);g.setStroke(new BasicStroke(1.5f));
+            g.setColor(WARNING);g.setStroke(new BasicStroke(2));
             for(Rectangle r:slots){
-                int x=r.x-1,y=r.y-1,right=r.x+r.width+1,bottom=r.y+r.height+1,n=Math.min(7,Math.min(r.width,r.height)/3);
-                // Corners keep the item itself readable, including a heavily edited 28-slot inventory.
-                g.drawLine(x,y,x+n,y);g.drawLine(x,y,x,y+n);g.drawLine(right-n,y,right,y);g.drawLine(right,y,right,y+n);
-                g.drawLine(x,bottom-n,x,bottom);g.drawLine(x,bottom,x+n,bottom);g.drawLine(right,bottom-n,right,bottom);g.drawLine(right-n,bottom,right,bottom);
+                // A full red outline is easy to spot while leaving the item artwork unobscured.
+                g.drawRect(r.x-1,r.y-1,r.width+2,r.height+2);
             }
         }finally{g.dispose();}
     }

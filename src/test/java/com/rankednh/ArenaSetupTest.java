@@ -16,7 +16,7 @@ public class ArenaSetupTest
     }
     @Test public void suppliesDoNotPretendTheDuelBuildHasAlreadyBeenSelected(){
         ArenaSetup.View view=TestArenaKit.SETUP.describe(false,0,2,false,false,TestArenaKit.DEFAULT.kit(),null,null);
-        assertTrue(view.detail.contains("after challenging"));assertFalse(view.comparisonKnown);
+        assertEquals("Kit ready",view.heading);assertFalse(view.comparisonKnown);
     }
     @Test public void guidesTheFinalTabThenConfirmOnlyWithTwoVerifiedKits(){
         ArenaKit kit=TestArenaKit.DEFAULT.kit();

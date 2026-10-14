@@ -20,7 +20,7 @@ final class ArenaRoundGuard {
         if(!maxBuild){code="build";reason="This fight is not using 126 combat with all combat stats at 99.";}
         else if(setup!=null && setup.warning){code="kit";reason=setup.message;}
         else if(setup==null || !setup.comparisonKnown || !defaultKit.matches(setup.kit) || !defaultKit.matches(setup.opponentKit)){
-            code="unchecked";reason="Both default kits were not checked before the fight started.";
+            code="unchecked";reason="Both kits were not checked before the fight started.";
         }
     }
     Models.SetupEvidence evidence(){return entered && !blocked() && setup!=null && setup.comparisonKnown?new Models.SetupEvidence(defaultKit.id(),setup.kit,setup.opponentKit):null;}
@@ -33,7 +33,7 @@ final class ArenaRoundGuard {
         // These are saved setup selectors, not the worn items/inventory that change during combat.
         if(!entered || blocked())return;
         if(own==null){code="unchecked";reason="The configured kit could not be checked in the battle area.";}
-        else if(!defaultKit.matches(own)){code="kit";reason="Your configured kit changed from the default after setup.";}
+        else if(!defaultKit.matches(own)){code="kit";reason="Your configured kit has an unapproved item, excess quantity or incorrect settings.";}
     }
     boolean blocked(){return !code.isEmpty();}
     String code(){return code;}

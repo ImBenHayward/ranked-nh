@@ -66,4 +66,15 @@ public class ArenaOnboardingTest {
         status.match=new Models.Match();status.match.state="active";assertFalse(ArenaOnboarding.idle(status));
         status.match.state="complete";assertTrue(ArenaOnboarding.idle(status));status.queued=true;assertFalse(ArenaOnboarding.idle(status));
     }
+    @Test public void omissionsUnlockOnboardingAndDoNotRevokeItButSubstitutionsDo(){
+        java.util.List<ArenaKit.Slot> bag=new java.util.ArrayList<>(kit.inventory);
+        bag.set(21,new ArenaKit.Slot(-1,0,"Empty"));bag.set(0,new ArenaKit.Slot(-1,0,"Empty"));
+        ArenaKit subset=new ArenaKit(241,0,1,0,kit.equipment,bag);
+        observe(true,true,true,subset,0);observe(true,true,true,subset,1200);
+        assertTrue(onboarding.canQueue(SERVICE,status,true));
+        bag.set(21,new ArenaKit.Slot(12817,1,"Elysian spirit shield"));
+        observe(true,true,true,new ArenaKit(241,0,1,0,kit.equipment,bag),1800);
+        assertFalse(onboarding.canQueue(SERVICE,status,true));
+    }
+
 }

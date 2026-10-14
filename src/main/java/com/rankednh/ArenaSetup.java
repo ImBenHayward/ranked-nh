@@ -71,7 +71,7 @@ final class ArenaSetup
             if(!accepted)confirmed=null;
             View result=describe(duel,progress,build,client.getVarbitValue(14026)==1,accepted,own,opponent,confirmed);
             if(duel && progress>=2)result=withGameCheck(result,widgetText(client,DUEL,55)+" "+widgetText(client,DUEL,142)+" "+widgetText(client,DUEL,145));
-            if(!duel)result=withGameCheck(result,widgetText(client,SUPPLIES,40));
+            // The supplies editor has no opponent to compare. Our own-kit rules determine readiness.
             if(accepted && confirmed==null && own.complete())confirmed=own;
             return result;
         }catch(RuntimeException unavailable){
@@ -88,9 +88,9 @@ final class ArenaSetup
         boolean yours=defaultKit.matches(own),theirs=defaultKit.matches(opponent);
         if(!yours || opponent!=null && opponent.complete() && !theirs){
             String heading=!yours?(opponent!=null && opponent.complete() && !theirs?"Fix both kits":"Fix your kit"):"Opponent needs to fix their kit";
-            String recovery=!yours && theirs?"Opponent has the default. Use Opponent's kit → Copy Load-out.":
-                yours?"Your kit is correct. Your opponent can copy it from their Opponent's kit tab.":"Restore the listed items from the Arena's item list. Both players need the default.";
-            View view=new View(heading,"Match the default items and quantities before confirming.",recovery,true,own);
+            String recovery=yours?"Your kit is ready. Your opponent needs to fix the red-marked items or settings.":
+                "Fix the red marks. Any default item can be left out; green additions are optional.";
+            View view=new View(heading,"Use only approved items, within their quantity limits.",recovery,true,own);
             List<ArenaKit.Change> changes=new ArrayList<>(own.defaultChanges(defaultKit.kit(),false));
             if(opponent!=null && opponent.complete())changes.addAll(opponent.defaultChanges(defaultKit.kit(),true));
             if(!duel && changes.size()==1 && "Spellbook".equals(changes.get(0).location))
@@ -99,11 +99,11 @@ final class ArenaSetup
             view.target=!yours?Target.MAX_MED_TAB:Target.OPPONENT_TAB;
             return view;
         }
-        if(!duel)return new View("Kit check complete","Find a match in the NH panel.","Choose Max/Med after challenging your opponent. Arrange and equip items however you like.",false,own);
+        if(!duel)return new View("Kit ready","Find a match in the NH panel.","Green additions are optional. Arrange and equip approved items however you like.",false,own);
         if(confirmed!=null && !confirmed.differences(own).isEmpty())
             return new View("Kit changed","Your kit changed after confirmation.","Check both kits and confirm again.",true,own);
-        if(opponent==null || !opponent.complete())return new View("Your kit is ready","Open Opponent's kit to check theirs.","Your default items and quantities match.",false,own).guide(Target.OPPONENT_TAB);
-        View matched=new View("Default kits ready",acceptedKit?"Waiting for your opponent.":"Both players have the default Max/Med kit.",acceptedKit?"The duel starts when you have both confirmed.":"Click Confirm on Opponent's kit to enter the duel.",false,own).guide(acceptedKit?Target.NONE:Target.KIT_CONFIRM);
+        if(opponent==null || !opponent.complete())return new View("Your kit is ready","Open Opponent's kit to check theirs.","Your items are allowed. Green additions are optional.",false,own).guide(Target.OPPONENT_TAB);
+        View matched=new View("Both kits ready",acceptedKit?"Waiting for your opponent.":"Both kits meet the Max/Med rules.",acceptedKit?"The duel starts when you have both confirmed.":"Click Confirm on Opponent's kit to enter the duel.",false,own).guide(acceptedKit?Target.NONE:Target.KIT_CONFIRM);
         matched.comparisonKnown=true;matched.opponentKit=opponent;return matched;
     }
     static View withGameCheck(View view,String text){
@@ -158,7 +158,10 @@ final class ArenaSetup
                 worn.add(item);
             }
             for(int i=0;i<28;i++){if(displayed[i]==null){complete=false;break;}bag.add(widgetSlot(client,displayed[i]));}
-            if(complete)return new ArenaKit(client.getRevision(),build,client.getVarbitValue(14031),client.getVarpValue(3533),worn,bag);
+            // Empty widgets can be loading placeholders. A genuinely empty opponent kit is
+            // allowed, but it needs the full transmitted container above as evidence.
+            if(complete && (worn.stream().anyMatch(s->s.itemId>0) || bag.stream().anyMatch(s->s.itemId>0)))
+                return new ArenaKit(client.getRevision(),build,client.getVarbitValue(14031),client.getVarpValue(3533),worn,bag);
         }
         return null;
     }

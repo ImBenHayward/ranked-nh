@@ -30,6 +30,7 @@ final class RankedNhPanel extends PluginPanel
         default void endTest(){}
         default void joinDiscord(){}
         default void setupHop(String region){}
+        default void filterCatalog(boolean enabled){}
     }
     static final Color BG=new Color(27,30,34),SURFACE=new Color(35,39,43),TEXT=new Color(231,235,232),
         MUTED=new Color(159,167,164),ACCENT=new Color(155,198,173),LINE=new Color(54,60,60);
@@ -47,6 +48,8 @@ final class RankedNhPanel extends PluginPanel
     private final JLabel seasonNotice=label("",10,MUTED);
     private final JPasswordField key=new JPasswordField();
     private final JCheckBox consent=new JCheckBox("Share match observations");
+    private final JCheckBox catalogFilter=new JCheckBox("Allowed items only",true);
+    private final JLabel catalogNotice=label("",10,MUTED);
     private final JButton connect,queue,leave,primary,secondary,forfeit,review,showReport,saveKit,endTest,setupHop;
     private ArenaOnboarding.Step onboardingStep;
     private boolean kitRequired,setupHopBusy;
@@ -92,6 +95,11 @@ final class RankedNhPanel extends PluginPanel
         meta.add(destination);meta.add(Box.createHorizontalStrut(10));meta.add(score);match.add(meta);
         match.add(Box.createVerticalStrut(12));match.add(detail);match.add(Box.createVerticalStrut(4));match.add(hint);
         match.add(setupDetails);
+        catalogFilter.setOpaque(false);catalogFilter.setForeground(MUTED);catalogFilter.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,11));
+        catalogFilter.setAlignmentX(LEFT_ALIGNMENT);catalogFilter.setBorder(BorderFactory.createEmptyBorder(8,0,0,0));
+        catalogFilter.setToolTipText("Filter the Arena item list. Green counts show optional additions; red marks show what to fix.");
+        catalogFilter.addActionListener(e->actions.filterCatalog(catalogFilter.isSelected()));match.add(catalogFilter);
+        match.add(catalogNotice);
         match.add(Box.createVerticalStrut(8));match.add(requestStatus);match.add(error);
         primary=button("Accept match",true,()->handoff(false));secondary=button("Decline",false,()->handoff(true));
         match.add(primary);match.add(secondary);
@@ -171,7 +179,7 @@ final class RankedNhPanel extends PluginPanel
         render(s,problem,busy,accountMatches,recording,handoff,System.currentTimeMillis());
     }
     void render(Models.Status s,String problem,boolean busy,boolean accountMatches,String recording,MatchupView handoff,long serverNow){
-        setupDetails.setVisible(false);endTest.setVisible(false);endTest.setEnabled(!busy && accountMatches);
+        setupDetails.setVisible(false);catalogFilter.setVisible(false);catalogNotice.setVisible(false);endTest.setVisible(false);endTest.setEnabled(!busy && accountMatches);
         saveKit.setVisible(false);kitSaved.setVisible(false);requestStatus.setVisible(false);detail.setForeground(TEXT);
         connect.setEnabled(!busy && consent.isSelected());
         displayedHandoff=handoff;boolean preview=handoff!=null && handoff.preview,connected=s!=null;
@@ -269,8 +277,8 @@ final class RankedNhPanel extends PluginPanel
         primary.setVisible(false);secondary.setVisible(false);
         setupDetails.removeAll();setupDetails.setVisible(!view.changes.isEmpty());
         if(!view.changes.isEmpty()){
-            state.setText(html(escape(view.changes.size()==1?view.changes.get(0).location+" differs":view.changes.size()+" kit differences")));
-            copy(detail,view.changes.size()>1?"Start here. The next fix appears once this is corrected.":"");
+            state.setText(html(escape(view.changes.size()==1?"One kit issue":view.changes.size()+" kit issues")));
+            copy(detail,view.changes.size()>1?"Fix the red marks. Start with this one.":"");
             ArenaKit.Change first=view.changes.get(0);
             copy(hint,"Spellbook".equals(first.location)?"Use the spellbook selector above the kit.":
                 "Rune pouch".equals(first.location)?"Open the rune pouch to check enabled runes.":
@@ -278,7 +286,7 @@ final class RankedNhPanel extends PluginPanel
             for(ArenaKit.Change change:view.changes.subList(0,1)){
                 setupDetails.add(Box.createVerticalStrut(8));
                 JLabel location=label(change.title(),11,TEXT);setupDetails.add(location);
-                JLabel items=label("",11,MUTED);copy(items,change.actualLabel+": "+change.yours+"\n"+change.expectedLabel+": "+change.theirs);setupDetails.add(items);
+                JLabel items=label("",11,MUTED);copy(items,change.summary());setupDetails.add(items);
             }
             if(view.changes.size()>1)setupDetails.add(label("+ "+(view.changes.size()-1)+" other fixes",10,MUTED));
             JLabel recovery=label("",10,MUTED);copy(recovery,view.detail);
@@ -289,6 +297,17 @@ final class RankedNhPanel extends PluginPanel
     }
     void onboarding(ArenaOnboarding.Step step,boolean required,boolean hopping){
         onboardingStep=step;kitRequired=required;setupHopBusy=hopping;
+    }
+    void renderCatalog(ArenaSetup.View view,boolean enabled){
+        renderCatalog(view,enabled,"");
+    }
+    void renderCatalog(ArenaSetup.View view,boolean enabled,String notice){
+        catalogFilter.setSelected(enabled);
+        catalogFilter.setVisible(view!=null && view.kit!=null && view.kit.complete() &&
+            view.kit.revision==ArenaSetup.REVISION && view.target!=ArenaSetup.Target.STATS_TAB &&
+            view.target!=ArenaSetup.Target.BUILD_CONFIRM && !"Wrong opponent".equals(view.heading));
+        copy(catalogNotice,catalogFilter.isVisible() && enabled?notice:"");
+        finish();
     }
     void onboardingGuide(String instruction,String region){worldGuide=instruction;worldGuideRegion=region;}
     void renderOnboarding(ArenaSetup.View setup){

@@ -22,5 +22,5 @@ final class DefaultArenaKit {
     }
     String id(){return reference.id;}
     ArenaKit kit(){return reference.kit;}
-    boolean matches(ArenaKit kit){return kit!=null && reference.kit.differences(kit).isEmpty();}
+    boolean matches(ArenaKit kit){return kit!=null && kit.allowedBy(reference.kit);}
 }
